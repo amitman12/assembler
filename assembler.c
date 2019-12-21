@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "get_name.h"
 #define NAMECOUNT 30
 #define WORDLEN 20
 char* names[NAMECOUNT] = { 0 };
