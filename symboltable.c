@@ -13,9 +13,9 @@ struct symbol {
 };
 
 struct symboltable {
-	struct symbol head;
+	struct symbol *head;
 };
-struct symboltable table = malloc(sizeof(struct symboltable));
+struct symboltable table;
 
 /* returns 1 if two strings are equal, and 0 otherwise. case sensitive */
 int eqls(char* a, char* b) {
@@ -30,65 +30,65 @@ int eqls(char* a, char* b) {
 	return 0;
 }
 
-struct symbol find_symbol(char* p) {
-	struct symbol temp = table.head;
+struct symbol* find_symbol(char* p) {
+	struct symbol* temp = table.head;
 	while (temp != NULL) {
-		if (eqls(p, temp.label))
+		if (eqls(p, temp->label))
 			return temp;
-		temp = temp.next;
+		temp = temp->next;
 	}
 	return NULL;
 }
 
-void add_symbol(struct symbol node) {
+void add_symbol(struct symbol * node) {
 	if (table.head == NULL) {
-		table.head.address = node.address;
-		table.head.location = node.location;
-		table.head.type = node.type;
-		strcpy(table.head.label, node.label);
-		table.head.next = NULL;
+		table.head = node;
 	} else {
-		struct symbol temp = table.head;
+		struct symbol* temp = table.head;
 		while (temp != NULL) {
-			if (temp.next != NULL)
-				temp = temp.next;
+			if (temp->next != NULL)
+				temp = temp->next;
 			else {
-				struct symbol newnode = malloc(sizeof(struct symbol));
-				strcpy(newnode.label, node.label);
-				newnode.address = node.address;
-				newnode.location = node.location;
-				newnode.next = NULL;
-				temp.next = newnode;
+				temp->next = node;
 				break;
 			}
 		}
 	}
 }
 
-void edit_symbol(struct symbol s) {
-	struct symbol temp = table.head;
+void edit_symbol(struct symbol* s) {
+	struct symbol* temp = table.head;
 	while (temp != NULL) {
-		if (eqls(s.label, temp.label)) {
-			temp.address = s.address;
-			temp.location = s.location;
-			temp.type = s.type;
+		if (eqls(s->label, temp->label)) {
+			temp->address = s->address;
+			temp->location = s->location;
+			temp->type = s->type;
 			break;
 		}
-		temp = temp.next;
+		temp = temp->next;
 	}
 }
 
-free_list(struct symbol s){
-	struct symbol temp;
-	while(s!=NULL){
+void free_list(struct symbol* s) {
+	struct symbol* temp;
+	while (s != NULL) {
 		temp = s;
-		s = s.next;
+		s = s->next;
 		free(temp);
 	}
 }
 
 void dealloc_table() {
 	free_list(table.head);
+	table.head = NULL;
 }
 
-
+struct symbol* create_symbol(char* name,int address, int type,int location){
+	struct symbol* ptr = malloc(sizeof(struct symbol));
+	strcpy(ptr->label,name);
+	ptr->address = address;
+	ptr->location = location;
+	ptr->type = type;
+	ptr->next = NULL;
+	return ptr;
+}

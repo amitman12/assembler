@@ -15,7 +15,43 @@
 char* names[NAMECOUNT] = { 0 };
 
 
-/*frees memory ljikasdf*/
+/*
+
+ assembler a b c d
+
+struct Symbol {
+	char* name;
+	int isDefined;
+	int isEntry;
+};
+
+struct SymbolTable {
+	struct Symbol head;
+};
+
+struct Assembler {
+	int dataCounter;
+	int instructionCounter;
+	struct SymbolTable* symbolTable;
+};
+
+
+ int assembler(char* filename) {
+
+ }
+
+ int main(int argc, char* argv[]) {
+ 	 int i;
+ 	 for (i = 1; i < argc; ++i) {
+ 	 	 assmbler(argv[i]);
+ 	 }
+ }
+
+
+
+ */
+
+/*frees memory */
 void free_names() {
 	int i = 0;
 	while (names[i] && i < NAMECOUNT)
