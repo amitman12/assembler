@@ -14,7 +14,8 @@
 #define WORDLEN 20
 char* names[NAMECOUNT] = { 0 };
 
-/*frees memory*/
+
+/*frees memory ljikasdf*/
 void free_names() {
 	int i = 0;
 	while (names[i] && i < NAMECOUNT)
