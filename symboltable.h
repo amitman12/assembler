@@ -20,7 +20,7 @@ struct symbol {
 struct symboltable {
 	struct symbol *head;
 };
-struct symboltable table;
+struct symboltable table; 
 int eqls(char* a, char* b);
 struct symbol* find_symbol(char* p);
 void add_symbol(struct symbol * node);

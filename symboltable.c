@@ -15,7 +15,9 @@ struct symbol {
 struct symboltable {
 	struct symbol *head;
 };
-struct symboltable table;
+struct symboltable table = {
+	NULL
+};
 
 /* returns 1 if two strings are equal, and 0 otherwise. case sensitive */
 int eqls(char* a, char* b) {

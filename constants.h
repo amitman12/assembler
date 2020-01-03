@@ -12,7 +12,7 @@
 #define INDIRECT REGISTER ADDRESSING 2
 #define DIRECT REGISTER ADDRESSING 3
 
-char* opcodes[] = {'mov','cmp','add','sub','lea','clr','not','inc','dec','jmp','bne','red','prn','jsr','rts','stop'};
+char* opcodes[] = {"mov",'cmp','add','sub','lea','clr','not','inc','dec','jmp','bne','red','prn','jsr','rts','stop', NULL};
 
 
 #endif /* CONSTANTS_H_ */
