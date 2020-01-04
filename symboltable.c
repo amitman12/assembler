@@ -1,47 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "symboltable.h"
+#include "constants.h"
 
 struct symbol {
-	char* label;
+	char label[MAX_LABEL_LENGTH];
 	int address;
+	/* type is enum in constants.h */
 	int type;
-	/* type is 1 for external and 0 for entry */
+	/* location is enum in constants.h */
 	int location;
-	/* location is 1 for code, and 0 for data */
 	struct symbol* next;
 };
 
 struct symboltable {
 	struct symbol *head;
 };
-struct symboltable table = {
+static struct symboltable table = {
 	NULL
 };
 
-/* returns 1 if two strings are equal, and 0 otherwise. case sensitive */
-int eqls(char* a, char* b) {
-
-	if ((*a == '\0') && (*b == '\0')) /*in case both of the strings are empty*/
-		return 1;
-
-	while (*a++ == *b++) {
-		if (*a == '\0')
-			return 1;
-	}
-	return 0;
-}
 
 struct symbol* find_symbol(char* p) {
 	struct symbol* temp = table.head;
 	while (temp != NULL) {
-		if (eqls(p, temp->label))
+		if (strcmp(p, temp->label))
 			return temp;
 		temp = temp->next;
 	}
 	return NULL;
 }
 
+/*if table is empty add given symbol. otherwise loop till end and add it */
 void add_symbol(struct symbol * node) {
 	if (table.head == NULL) {
 		table.head = node;
@@ -58,20 +49,25 @@ void add_symbol(struct symbol * node) {
 	}
 }
 
-void edit_symbol(struct symbol* s) {
+/* modifies a symbol whose label is in *(str). if address/locatipn/type arent known yet, no modification happens */
+void modify_symbol(char* str, int address, int location, int type) {
 	struct symbol* temp = table.head;
 	while (temp != NULL) {
-		if (eqls(s->label, temp->label)) {
-			temp->address = s->address;
-			temp->location = s->location;
-			temp->type = s->type;
+		if (strcmp(str, temp->label)) {
+			if(address!= -1)
+				temp->address = address;
+			if (location!= Unknown_Location)
+				temp->location = location;
+			if(type!= Unknown_Type)
+				temp->type = type;
 			break;
 		}
 		temp = temp->next;
 	}
 }
 
-void free_list(struct symbol* s) {
+/* frees every symbol in the symboltable by looping over the symbols */
+static void free_list(struct symbol* s) {
 	struct symbol* temp;
 	while (s != NULL) {
 		temp = s;
@@ -80,11 +76,13 @@ void free_list(struct symbol* s) {
 	}
 }
 
-void dealloc_table() {
+/* calls free_list with head symbol in order to free the table */
+void dealloc_symbol_table() {
 	free_list(table.head);
 	table.head = NULL;
 }
 
+/* creates a new object of type symbol, and allocates space in memory for it */
 struct symbol* create_symbol(char* name,int address, int type,int location){
 	struct symbol* ptr = malloc(sizeof(struct symbol));
 	strcpy(ptr->label,name);

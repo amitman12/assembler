@@ -1,11 +1,11 @@
 
 all: assembler
 
-assembler: symboltable.c constants.c
-	gcc -o get_name -Wall -ansi -pedantic -g symboltable.c constants.c
+assembler: symboltable.h symboltable.c constants.c constants.h assembler.c assembler.h firstpass.c secondpass.c main.c
+	gcc -o -Wall -ansi -pedantic -g symboltable.c constants.c firstpass.c secondpass.c assembler.c main.c
 
 clean:
 
-test: get_name
+test: 
 
 zip: test

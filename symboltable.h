@@ -7,24 +7,19 @@
 
 #ifndef SYMBOLTABLE_H_
 #define SYMBOLTABLE_H_
-struct symbol {
-	char* label;
-	int address;
-	int type;
-	/* type is 1 for external and 0 for entry */
-	int location;
-	/* location is 1 for code, and 0 for data */
-	struct symbol* next;
-};
 
-struct symboltable {
-	struct symbol *head;
-};
-struct symboltable table; 
-int eqls(char* a, char* b);
+/* finds symbol according to label in *(p) */
 struct symbol* find_symbol(char* p);
+
+/* adds a given symbol to the table. requires creating a symbol first */
 void add_symbol(struct symbol * node);
-void edit_symbol(struct symbol* s);
-void dealloc_table();
+
+/* looks for a symbol accordint to *str, and modifies its address, type and location */
+void modify_symbol(char* str, int address, int location, int type);
+
+/* frees memory held up by symboltable */
+void dealloc_symbol_table();
+
+/* creates a new object of type symbol, and allocates space in memory for it */
 struct symbol* create_symbol(char* name,int address, int type,int location);
 #endif /* SYMBOLTABLE_H_ */
