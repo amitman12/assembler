@@ -49,12 +49,12 @@ void add_symbol(struct symbol * node) {
 	}
 }
 
-/* modifies a symbol whose label is in *(str). if address/locatipn/type arent known yet, no modification happens */
+/* modifies a symbol whose label is in *(str). if address/locatipn/type arent known yet, no modifications happen */
 void modify_symbol(char* str, int address, int location, int type) {
 	struct symbol* temp = table.head;
 	while (temp != NULL) {
 		if (strcmp(str, temp->label)) {
-			if(address!= -1)
+			if(address!= UNKNOWN_ADDRESS)
 				temp->address = address;
 			if (location!= Unknown_Location)
 				temp->location = location;
@@ -91,4 +91,15 @@ struct symbol* create_symbol(char* name,int address, int type,int location){
 	ptr->type = type;
 	ptr->next = NULL;
 	return ptr;
+}
+void update_symbol(int instruction_count){
+	struct symbol* node;
+	node = table.head;
+	while(node!=NULL){
+		if(node->location==Data){
+			modify_symbol(node->label, node->address+100+instruction_count, node->location, node->type);
+		}
+		node = node->next;
+	}
+
 }
