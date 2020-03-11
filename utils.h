@@ -15,7 +15,7 @@ char* find_last_quote(char*p);
 
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);
-
+void chomp(char*);
 int addressing_check_2operands(char*);
 char* skipWhiteSpaces(char* );
 char* readSymbol(char*, char*);

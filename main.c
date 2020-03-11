@@ -11,8 +11,8 @@
 int main(int argc, char*argv[]) {
     int i;
     if (argc < 2) {
-        printf("expecting file names\n");
-        printf("USAGE: assembler file...\n");
+        fprintf(stderr,"expecting file names\n");
+        fprintf(stderr,"USAGE: assembler file...\n");
         exit(1);
     }
     for (i = 1; i < argc; ++i) {

@@ -11,6 +11,15 @@
 char* c = "";
 
 
+/* remove trailing \r and \n from a string */
+void chomp(char* str) {
+	int len = strlen(str);
+	while (len > 0 && (str[len - 1] == '\r' || str[len - 1] == '\n')) {
+		--len;
+	}
+	str[len] = '\0';
+}
+
 
 int checkLabel(char* label){
 	/* returns 1 if label doesn't already exist, and is legal */
@@ -57,7 +66,7 @@ char* readSymbol(char*p, char* str) {
     for(; isalnum(*p); ++p) {
     }
     end = p;
-    strncpyNull(str,start,end-start);
+    strncpy(str,start,end-start);
     p = skipWhiteSpaces(p);
     if (*p == '\0') {
         return p;
@@ -75,13 +84,13 @@ char* readRegister(char*p, int* reg) {
     	/* expecting register name */
         return NULL;
     }
-    if (p[1] < '0' || p[1] > '7' ) {
-        /* expecting valid register name */
-        return NULL;
+    if(!isalpha(*p)||*p=='8'||*p=='9'){
+    	/* expecting valid register name */
+    	return NULL;
     }
 
-    *reg = p[1] - '0';
-    p = skipWhiteSpaces(p + 2);
+    *reg = (int)*p;
+    p = skipWhiteSpaces(p);
 
 
     if (*p == '\0') {

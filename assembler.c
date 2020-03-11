@@ -26,7 +26,7 @@ char* readCommandOperand(char* p, struct operand* op) {
 	if (*p == '*') {
 		nextToken = readRegister(p, &(op->info.registerId));
 		if (nextToken == NULL) {
-			printf("expecting a valid register name");
+			fprintf(stderr, "expecting a valid register name\n");
 			return NULL;
 		}
 		op->addressingType = Indirect_Register_Addressing;
@@ -35,7 +35,7 @@ char* readCommandOperand(char* p, struct operand* op) {
 	} else if (*p == '#') {
 		nextToken = readNumber(p, &op->info.immediateValue);
 		if (nextToken == NULL) {
-			printf("expecting a valid immediate");
+			fprintf(stderr,"expecting a valid immediate\n");
 			return NULL;
 		}
 		op->addressingType = Immediate_Addressing;
@@ -56,7 +56,7 @@ char* readCommandOperand(char* p, struct operand* op) {
 		}
 
 		if (nextToken == NULL) {
-            printf("expected valid operand (register or symbol)");
+            fprintf(stderr,"expected valid operand (register or symbol)\n");
             return NULL;
 		}
 	}
@@ -83,24 +83,24 @@ int processGroup1Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op1);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		printf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != ',') {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	++p;
 
 	nextToken = readCommandOperand(p, &op2);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s accepts exactly two operands", cmd);
+		fprintf("command %s accepts exactly two operands\n", cmd);
 		return -1;
 	}
 	/* both operands were parsed successfully*/
@@ -109,7 +109,7 @@ int processGroup1Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* we only need one extra word in machine code for both operands */
 		return 2;
 	} else if (op2.addressingType == 0) {
-		printf("error, dest operand addressing cannot be immediate addressing");
+		fprintf(stderr,"error, dest operand addressing cannot be immediate addressing\n");
 		return ADDRESSING_ERROR;
 	} else {
 		/* we need one word in machine code per operand and one for the command */
@@ -128,24 +128,24 @@ int processGroup2Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op1);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != ',') {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	++p;
 
 	nextToken = readCommandOperand(p, &op2);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s accepts exactly two operands", cmd);
+		fprintf(stderr,"command %s accepts exactly two operands\n", cmd);
 		return -1;
 	}
 	/* both operands were parsed successfully*/
@@ -172,29 +172,29 @@ int processGroup3Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op1);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != ',') {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	++p;
 
 	nextToken = readCommandOperand(p, &op2);
 	if (nextToken == NULL) {
-		printf("command %s requires two operands", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s accepts exactly two operands", cmd);
+		fprintf(stderr,"command %s accepts exactly two operands\n", cmd);
 		return -1;
 	}
 	/* both operands were parsed successfully*/
 	if (op1.addressingType != 1) {
-		printf("error, source addressing type has to be Direct Addressing");
+		fprintf(stderr,"error, source addressing type has to be Direct Addressing\n");
 		return ADDRESSING_ERROR;
 	} else {
 		/* we need one word in machine code per operand and one for the command */
@@ -213,18 +213,18 @@ int processGroup4Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op);
 	if (nextToken == NULL) {
-		printf("command %s requires one operand", cmd);
+		fprintf(stderr,"command %s requires one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s requires exactly one operand", cmd);
+		fprintf(stderr,"command %s requires exactly one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 
 	/* operand was parsed successfully*/
 	if (op.addressingType == 0) {
-		printf("error, dest addressing type cannot be Immediate Addressing");
+		fprintf(stderr,"error, dest addressing type cannot be Immediate Addressing\n");
 		return ADDRESSING_ERROR;
 	} else {
 		/* we need one word in machine code per operand and one for the command */
@@ -244,19 +244,19 @@ int processGroup5Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op);
 	if (nextToken == NULL) {
-		printf("command %s requires one operand", cmd);
+		fprintf(stderr,"command %s requires one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s requires exactly one operand", cmd);
+		fprintf(stderr,"command %s requires exactly one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 
 	/* operand was parsed successfully*/
 	if (op.addressingType == 0 || op.addressingType == 3) {
-		printf(
-				"error, dest addressing type cannot be Immediate Addressing or Direct Register Addressing");
+		fprintf(stderr,
+				"error, dest addressing type cannot be Immediate Addressing or Direct Register Addressing\n");
 		return ADDRESSING_ERROR;
 	} else {
 		/* we need one word in machine code per operand and one for the command */
@@ -276,12 +276,12 @@ int processGroup6Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op);
 	if (nextToken == NULL) {
-		printf("command %s requires one operand", cmd);
+		fprintf(stderr,"command %s requires one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		printf("command %s requires exactly one operand", cmd);
+		fprintf(stderr,"command %s requires exactly one operand\n", cmd);
 		return SYNTAX_ERROR;
 	}
 
@@ -296,7 +296,7 @@ int processGroup7Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	char* p;
 	p = skipWhiteSpaces(args);
 	if (*p != '\0') {
-		printf("command %s does not accept arguments", cmd);
+		fprintf(stderr,"command %s does not accept arguments\n", cmd);
 		return SYNTAX_ERROR;
 	}
 	/* one word in machine code needed*/
@@ -348,20 +348,20 @@ int processLine(int lineNumber, char* line, int* dataCount,
 	if (*nextToken == ':') {
 		/* new label defined in this line*/
 		if (nextToken - p == 0) {
-			printf("expecting non empty label");
+			fprintf(stderr,"expecting non empty label\n");
 			return LABEL_EMPTY;
 		}
 		if (nextToken - p >= MAX_LABEL) {
-			printf("label too long");
+			fprintf(stderr,"label too long\n");
 			return LABEL_TOO_LONG;
 		}
 		strncpyNull(label, p, nextToken - p);
 		if (find_symbol(label)) {
-			printf("label already exists");
+			fprintf(stderr,"label already exists\n");
 			return LABEL_ALREADY_EXISTS;
 		}
 		if (is_reserved_word(label)) {
-			printf("label can't be a reserved word");
+			fprintf(stderr,"label can't be a reserved word\n");
 			return RESERVED_WORD;
 		}
 		labelFlag = 1;
@@ -384,7 +384,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 				nextToken = readSymbol(nextToken, string);
 				if (nextToken == NULL) {
 					/* readSymbol failed */
-					printf("syntax error");
+					fprintf(stderr,"syntax error \n");
 					return SYNTAX_ERROR;
 				}
 				if (checkLabel(string)) {
@@ -397,7 +397,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 
 				if (*nextToken == '\0') {
 					if (label_operand_count == 0) {
-						printf(".extern line with no labels");
+						fprintf(stderr,".extern line with no labels\n");
 						return SYNTAX_ERROR;
 					}
 					return label_operand_count;
@@ -411,7 +411,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 				}
 
 				if (!isdigit(*nextToken)) {
-					printf("invalid argument for .data");
+					fprintf(stderr,"invalid argument for .data\n");
 					return SYNTAX_ERROR;
 				}
 				while (isdigit(*nextToken)) {
@@ -429,7 +429,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 					/* we need 1 word per operand and 1 word for the .data instruction */
 					return operand_count + 1;
 				} else if (*nextToken != ',') {
-					printf("expecting ,");
+					fprintf(stderr, "expecting ,\n");
 					return SYNTAX_ERROR;
 				}
 			}
@@ -438,13 +438,13 @@ int processLine(int lineNumber, char* line, int* dataCount,
 
 		} else if (strcmp(p, ".string ") == 0 || strcmp(p, ".string\t") == 0) {
 			if (*nextToken != '\"') {
-				printf("expecting\" ");
+				fprintf(stderr,"expecting\" \n");
 				return SYNTAX_ERROR;
 			}
 			nextToken++;
 
 			if (!isprint(*nextToken)) {
-				printf("string must only contain printable ascii characters");
+				fprintf(stderr,"string must only contain printable ascii characters\n");
 				return SYNTAX_ERROR;
 			}
 			end = find_last_quote(nextToken);
@@ -456,18 +456,18 @@ int processLine(int lineNumber, char* line, int* dataCount,
 				nextToken++;
 			}
 			if (nextToken != end) {
-				printf("label must only contain printable ascii characters");
+				fprintf(stderr,"label must only contain printable ascii characters\n");
 				return SYNTAX_ERROR;
 			}
 			if (word_count == 0) {
-				printf(".string line with empty string " " ");
+				fprintf(stderr,".string line with empty string " " \n");
 				return SYNTAX_ERROR;
 			}
 			nextToken++;
 			nextToken = skipWhiteSpaces(nextToken);
 
 			if (*nextToken != '\0') {
-				printf("invalid syntax for .string line");
+				fprintf(stderr,"invalid syntax for .string line\n");
 				return SYNTAX_ERROR;
 			}
 			if (labelFlag == 1) {
@@ -478,7 +478,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			/* we also need 1 word for the .string line */
 			return word_count + 2;
 		} else {
-			printf("no such directive");
+			fprintf(stderr,"no such directive\n");
 			return SYNTAX_ERROR;
 		}
 	} else {
@@ -488,13 +488,13 @@ int processLine(int lineNumber, char* line, int* dataCount,
 					Code));
 
 		if (nextToken - p == 0 || nextToken - p >= MAX_CMD) {
-			printf("expecting a command");
+			fprintf(stderr,"expecting a command\n");
 			return COMMAND_EXPECTED;
 		}
 		strncpyNull(cmd, p, nextToken - p);
 		cmdInfo = findCommand(cmd);
 		if (cmdInfo == NULL) {
-			printf("no such command");
+			fprintf("no such command\n");
 			return COMMAND_DOESNT_EXIST;
 		}
 		nextToken = skipWhiteSpaces(nextToken);
