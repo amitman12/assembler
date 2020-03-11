@@ -8,9 +8,9 @@
 #ifndef FIRSTPASS_H_
 #define FIRSTPASS_H_
 
+#include "assembler.h"
 
-
-int firstPass(char* fileName);
+int firstPass(struct assemblerContext* context);
 
 
 

@@ -13,32 +13,29 @@
 #include <ctype.h>
 
 
-int firstPass(char* fileName) {
+int firstPass(struct assemblerContext* context) {
 	/* returns 0 on success, otherwise returns number of errors */
-    int dataCount = 0;
-    int instructionCount = 0;
-    int errorCount = 0;
-    int lineNumber = 0;
     int result;
     char* line;
-    FILE* inputFile = fopen(fileName,"r");
+    FILE* inputFile = fopen(context->fileName,"r");
     if (inputFile == NULL) {
-        fprintf(stderr,"could not open file \"%s\". error: %s\n", fileName, strerror(errno));
+        fprintf(stderr,"could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
         return -1;
     }
 
     line = (char*)malloc(MAX_CMD);
     while (fgets(line, MAX_CMD, inputFile)) {
     	chomp(line);
-        if ((result = processLine(++lineNumber, line, &dataCount, &instructionCount)) < 0) {
-            ++errorCount;
+        ++context->lineNumber;
+        if ((result = processLine(context, line)) < 0) {
+            ++context->errorCount;
         }
     }
-    if (errorCount == 0) {
-        update_data_symbol(instructionCount);
+    if (context->errorCount == 0) {
+        update_data_symbol(&context->table, context->instructionCount);
         free(line);
         return 0;
     }
     free(line);
-    return errorCount;
+    return context->errorCount;
 }

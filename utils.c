@@ -21,22 +21,6 @@ void chomp(char* str) {
 }
 
 
-int checkLabel(char* label){
-	/* returns 1 if label doesn't already exist, and is legal */
-	int len;
-	len = strlen(label);
-	if(len==0||len>MAX_LABEL){
-		return 0;
-	}
-	if(is_reserved_word(label)==1){
-		return 0;
-	}
-	if(find_symbol(label)!=NULL){
-		return 0;
-	}
-	return 1;
-}
-
 
 char* find_last_quote(char*p){
 	/* returns last quote in a string */

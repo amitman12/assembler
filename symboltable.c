@@ -4,27 +4,15 @@
 #include "symboltable.h"
 #include "constants.h"
 
-struct symbol {
-	char label[MAX_LABEL];
-	int address;
-	/* type is enum in constants.h */
-	int type;
-	/* location is enum in constants.h */
-	int location;
-	struct symbol* next;
-};
-
-struct symboltable {
-	struct symbol *head;
-};
+/*
 static struct symboltable table = {
 	NULL
 };
+*/
 
-
-struct symbol* find_symbol(char* p) {
+struct symbol* find_symbol(struct symboltable* table, char* p) {
 	/* look for label in symboltable returns 0 on failure*/
-	struct symbol* temp = table.head;
+	struct symbol* temp = table->head;
 	while (temp != NULL) {
 		if (strcmp(p, temp->label))
 			return temp;
@@ -34,11 +22,11 @@ struct symbol* find_symbol(char* p) {
 }
 
 /*if table is empty add given symbol. otherwise loop till end and add it */
-void add_symbol(struct symbol * node) {
-	if (table.head == NULL) {
-		table.head = node;
+void add_symbol(struct symboltable* table, struct symbol * node) {
+	if (table->head == NULL) {
+		table->head = node;
 	} else {
-		struct symbol* temp = table.head;
+		struct symbol* temp = table->head;
 		while (temp != NULL) {
 			if (temp->next != NULL)
 				temp = temp->next;
@@ -51,8 +39,8 @@ void add_symbol(struct symbol * node) {
 }
 
 /* modifies a symbol whose label is in *(str). if address/locatipn/type arent known yet, no modifications happen */
-void modify_symbol(char* str, int address, int location, int type) {
-	struct symbol* temp = table.head;
+void modify_symbol(struct symboltable* table, char* str, int address, int location, int type) {
+	struct symbol* temp = table->head;
 	while (temp != NULL) {
 		if (strcmp(str, temp->label)) {
 			if(address!= UNKNOWN_ADDRESS)
@@ -78,13 +66,13 @@ static void free_list(struct symbol* s) {
 }
 
 /* calls free_list with head symbol in order to free the table */
-void dealloc_symbol_table() {
-	free_list(table.head);
-	table.head = NULL;
+void dealloc_symbol_table(struct symboltable* table) {
+	free_list(table->head);
+	table->head = NULL;
 }
 
 /* creates a new object of type symbol, and allocates space in memory for it */
-struct symbol* create_symbol(char* name,int address, int type,int location){
+struct symbol* create_symbol(struct symboltable* table, char* name,int address, int type,int location){
 	struct symbol* ptr = malloc(sizeof(struct symbol));
 	strcpy(ptr->label,name);
 	ptr->address = address;
@@ -93,14 +81,31 @@ struct symbol* create_symbol(char* name,int address, int type,int location){
 	ptr->next = NULL;
 	return ptr;
 }
-void update_data_symbol(int instruction_count){
+void update_data_symbol(struct symboltable* table, int instruction_count){
 	struct symbol* node;
-	node = table.head;
+	node = table->head;
 	while(node!=NULL){
 		if(node->location==Data){
-			modify_symbol(node->label, node->address+100+instruction_count, node->location, node->type);
+			modify_symbol(table, node->label, node->address+100+instruction_count, node->location, node->type);
 		}
 		node = node->next;
 	}
 
 }
+
+int checkLabel(struct symboltable* table, char* label){
+    /* returns 1 if label doesn't already exist, and is legal */
+    int len;
+    len = strlen(label);
+    if(len==0||len>MAX_LABEL){
+        return 0;
+    }
+    if(is_reserved_word(label)==1){
+        return 0;
+    }
+    if(find_symbol(table, label)!=NULL){
+        return 0;
+    }
+    return 1;
+}
+

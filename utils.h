@@ -9,8 +9,6 @@
 #define UTILS_H_
 
 
-int checkLabel(char* label);
-
 char* find_last_quote(char*p);
 
 int command_syntax_check(int,char*);

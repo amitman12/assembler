@@ -83,7 +83,7 @@ int processGroup1Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	/* p points to the first non whitespace character in args */
 	nextToken = readCommandOperand(p, &op1);
 	if (nextToken == NULL) {
-		printf(stderr,"command %s requires two operands\n", cmd);
+		fprintf(stderr,"command %s requires two operands\n", cmd);
 		return -1;
 	}
 	p = skipWhiteSpaces(nextToken);
@@ -100,7 +100,7 @@ int processGroup1Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 	}
 	p = skipWhiteSpaces(nextToken);
 	if (*p != '\0') {
-		fprintf("command %s accepts exactly two operands\n", cmd);
+		fprintf(stderr, "command %s accepts exactly two operands\n", cmd);
 		return -1;
 	}
 	/* both operands were parsed successfully*/
@@ -322,8 +322,8 @@ struct commandInfo commands[] = { /**/
 { "stop", processGroup7Command }, /**/
 { NULL, NULL } /**/
 };
-int processLine(int lineNumber, char* line, int* dataCount,
-		int* instructionCount) {
+
+int processLine(struct assemblerContext* context, char* line) {
 	/* returns 0 on successful parse */
 	char* end;
 	char* string;
@@ -352,11 +352,11 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			return LABEL_EMPTY;
 		}
 		if (nextToken - p >= MAX_LABEL) {
-			fprintf(stderr,"label too long\n");
+			fprintf(stderr,"%s:%d: ERROR: label too long\n", context->fileName, context->lineNumber);
 			return LABEL_TOO_LONG;
 		}
 		strncpyNull(label, p, nextToken - p);
-		if (find_symbol(label)) {
+		if (find_symbol(&context->table, label)) {
 			fprintf(stderr,"label already exists\n");
 			return LABEL_ALREADY_EXISTS;
 		}
@@ -387,10 +387,10 @@ int processLine(int lineNumber, char* line, int* dataCount,
 					fprintf(stderr,"syntax error \n");
 					return SYNTAX_ERROR;
 				}
-				if (checkLabel(string)) {
+				if (checkLabel(&context->table, string)) {
 					/*add label to symboltable*/
-					add_symbol(
-							create_symbol(string, *dataCount, External,
+					add_symbol(&context->table,
+                               create_symbol(&context->table, string, context->dataCount, External,
 									Unknown_Location));
 
 				}
@@ -405,7 +405,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			}
 		} else if (strcmp(p, ".data ") == 0 || strcmp(p, ".data\t") == 0) {
 			/* .data line */
-			while (*nextToken != '\0') {
+			while (*nextToken) {
 				if (*nextToken == '+' || *nextToken == '-') {
 					nextToken++;
 				}
@@ -422,8 +422,8 @@ int processLine(int lineNumber, char* line, int* dataCount,
 				if (*nextToken == '\0') {
 					if (labelFlag == 1) {
 						/* add label defined in this line to symboltable */
-						add_symbol(
-								create_symbol(label, *dataCount, Regular,
+						add_symbol(&context->table,
+                                   create_symbol(&context->table, label, context->dataCount, Regular,
 										Data));
 					}
 					/* we need 1 word per operand and 1 word for the .data instruction */
@@ -472,7 +472,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			}
 			if (labelFlag == 1) {
 				/* add label defined in this line to symboltable */
-				add_symbol(create_symbol(label, *dataCount, Regular, Data));
+				add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular, Data));
 			}
 			/* we need 1 word per character in string ex "abcd" means 5 words, including one word for \0 */
 			/* we also need 1 word for the .string line */
@@ -484,7 +484,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 	} else {
 		/*we expect a command here. add symbol if defined in this line*/
 		if (labelFlag == 1)
-			add_symbol(create_symbol(label, *instructionCount + 100, Regular,
+			add_symbol(&context->table, create_symbol(&context->table, label, context->instructionCount + 100, Regular,
 					Code));
 
 		if (nextToken - p == 0 || nextToken - p >= MAX_CMD) {
@@ -494,7 +494,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 		strncpyNull(cmd, p, nextToken - p);
 		cmdInfo = findCommand(cmd);
 		if (cmdInfo == NULL) {
-			fprintf("no such command\n");
+			fprintf(stderr, "no such command\n");
 			return COMMAND_DOESNT_EXIST;
 		}
 		nextToken = skipWhiteSpaces(nextToken);
@@ -504,13 +504,31 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			return result;
 		}
 
-		*instructionCount += result;
+        context->instructionCount += result;
 
 	}
 
 	return 0;
 }
 
-int assembler(char* fileName) {
-	return firstPass(fileName);
+
+struct assemblerContext* createAssemblerContext(char* fileName) {
+    struct assemblerContext* context = (struct assemblerContext*) calloc(1, sizeof (struct assemblerContext));
+    // calloc already initialized to zeroes. we take care of the rest
+    context->fileName = strdup(fileName);
+    return context;
 }
+
+void deallocateAssemblerContext(struct assemblerContext* p) {
+    free(p->fileName);
+    dealloc_symbol_table(&p->table);
+}
+
+int assembler(char* fileName) {
+    int result;
+    struct assemblerContext* context = createAssemblerContext(fileName);
+    result = firstPass(context);
+    deallocateAssemblerContext(context);
+    return result;
+}
+
