@@ -23,4 +23,5 @@ char* readNumber(char*, int* );
 char* readToken(char*, char* );
 char* readRegister(char*, int*);
 int isDelimiter(char, char*);
+char* strncpyNull(char* dst, char* src, int count);
 #endif /* UTILS_H_ */

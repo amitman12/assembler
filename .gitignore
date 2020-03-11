@@ -1,2 +1,6 @@
 *.dSYM
+.idea
 assembler
+cmake-build-debug
+test_result.txt
+

@@ -1,0 +1,8 @@
+test1
+
+expected valid operandcommand sub requires two operandsexpected valid operandcommand sub requires two operandsexpected valid operandcommand add requires two operands
+
+---------------------------------------
+
+
+

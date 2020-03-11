@@ -10,6 +10,7 @@
 
 
 
+int firstPass(char* fileName);
 
 
 

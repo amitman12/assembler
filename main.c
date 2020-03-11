@@ -6,6 +6,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include "assembler.h"
+
 int main(int argc, char*argv[]) {
     int i;
     if (argc < 2) {

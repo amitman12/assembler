@@ -9,7 +9,10 @@ clean:
 
 test: assembler
 	rm -fr test_result.txt assembler.zip
-	cat test.txt | ./assembler >> test_result.txt
+	echo "test1\n"   >> test_result.txt
+	./assembler test1.as >> test_result.txt
+	echo "\n"   >> test_result.txt
+	echo "---------------------------------------\n"   >> test_result.txt
 	echo "\n"   >> test_result.txt
 
 zip: test

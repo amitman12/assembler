@@ -35,6 +35,7 @@ int processPrnCommand(struct commandInfo* cmdInfo, char* cmd, char* args);
 int processNonArgsCommand(struct commandInfo* cmdInfo, char* cmd, char* args);
 int processLine(int , char* , int* , int* );
 
+int assembler(char* fileName);
 
 
 

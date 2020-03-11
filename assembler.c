@@ -4,6 +4,7 @@
 #include "assembler.h"
 #include "utils.h"
 #include "constants.h"
+#include "firstpass.h"
 
 struct commandInfo* findCommand(char* cmd) {
 	struct commandInfo* c;
@@ -110,7 +111,6 @@ int processGroup1Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* we need one word in machine code per operand and one for the command */
 		return 3;
 	}
-	return SYNTAX_ERROR;
 }
 
 int processGroup2Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
@@ -154,7 +154,6 @@ int processGroup2Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* we need one word in machine code per operand and one for the command */
 		return 3;
 	}
-	return SYNTAX_ERROR;
 }
 
 int processGroup3Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
@@ -197,7 +196,6 @@ int processGroup3Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* we need one word in machine code per operand and one for the command */
 		return 3;
 	}
-	return SYNTAX_ERROR;
 }
 
 int processGroup4Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
@@ -229,7 +227,6 @@ int processGroup4Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* one operand , one word*/
 		return 2;
 	}
-	return SYNTAX_ERROR;
 }
 
 int processGroup5Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
@@ -262,7 +259,6 @@ int processGroup5Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
 		/* one operand , one word*/
 		return 2;
 	}
-	return SYNTAX_ERROR;
 }
 
 int processGroup6Command(struct commandInfo* cmdInfo, char* cmd, char* args) {
@@ -355,7 +351,7 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			printf("label too long");
 			return LABEL_TOO_LONG;
 		}
-		strncpy(label, p, nextToken - p);
+		strncpyNull(label, p, nextToken - p);
 		if (find_symbol(label)) {
 			printf("label already exists");
 			return LABEL_ALREADY_EXISTS;
@@ -367,7 +363,6 @@ int processLine(int lineNumber, char* line, int* dataCount,
 		labelFlag = 1;
 		p = skipWhiteSpaces(nextToken + 1);
 		nextToken = readToken(p, " \t");
-		nextToken = skipWhiteSpaces(nextToken);
 	}
 
 	/*now p points to the first non-label token (word like command or .data) */
@@ -444,12 +439,12 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			}
 			nextToken++;
 
-			if (!isprint(nextToken)) {
+			if (!isprint(*nextToken)) {
 				printf("string must only contain printable ascii characters");
 				return SYNTAX_ERROR;
 			}
 			end = find_last_quote(nextToken);
-			while (isprint(nextToken) && nextToken < end) {
+			while (isprint(*nextToken) && nextToken < end) {
 				if(*nextToken=='\\'&&*(nextToken+1)=='\"'){
 
 				}
@@ -492,12 +487,13 @@ int processLine(int lineNumber, char* line, int* dataCount,
 			printf("expecting a command");
 			return COMMAND_EXPECTED;
 		}
-		strncpy(cmd, p, nextToken - p);
+		strncpyNull(cmd, p, nextToken - p);
 		cmdInfo = findCommand(cmd);
 		if (cmdInfo == NULL) {
 			printf("no such command");
 			return COMMAND_DOESNT_EXIST;
 		}
+		nextToken = skipWhiteSpaces(nextToken);
 		result = cmdInfo->processCommand(cmdInfo, cmd, nextToken);
 
 		if (result < 0) {

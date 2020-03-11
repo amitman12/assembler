@@ -10,36 +10,6 @@
 #include "symboltable.h"
 char* c = "";
 
-int checkDotString(char* arg, int flag, char* str){
-	/* .string line */
-	/* arg points to first non space/tab in line after .string */
-	/* copies label in arg into str */
-	int pos = 0;
-	char* end;
-	char* temp[MAX_CMD];
-	end = find_last_quote(arg);
-	while(isprint(*arg) && arg<end){
-
-	}
-	while(isprint(*arg)){
-		if(*arg=='\\'){
-			while(*(arg+1)=='\\'){
-				strncpy(str+pos,arg,1);
-				pos++;
-				arg++;
-			}
-			if(*arg=='\0'){
-				strncpy(str+pos,arg,1);
-
-			}
-			if(!isprint(*arg+1)){
-				return -1;
-			}
-		}
-	}
-
-}
-
 
 
 int checkLabel(char* label){
@@ -189,3 +159,8 @@ int isDelimiter(char ch, char* delimiters) {
 
 
 
+char* strncpyNull(char* dst, char* src, int count) {
+    strncpy(dst, src, count);
+    dst[count] = '\0';
+    return dst;
+}

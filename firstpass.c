@@ -23,12 +23,13 @@ int firstPass(char* fileName) {
     char* line;
     FILE* inputFile = fopen(fileName,"r");
     if (inputFile == NULL) {
-        printf("err");
+        printf("could not open file \"%s\". error: %s\n", fileName, strerror(errno));
         return -1;
     }
 
     line = (char*)malloc(MAX_CMD);
-    while (line, MAX_CMD, inputFile) {
+    while (fgets(line, MAX_CMD, inputFile)) {
+        /*TODO remove \n*/
         if ((result = processLine(++lineNumber, line, &dataCount, &instructionCount)) < 0) {
             ++errorCount;
         }
