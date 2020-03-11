@@ -6,6 +6,9 @@
  */
 #include "constants.h"
 char* codes[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bne","red","prn","jsr","rts","stop"};
+
+
+
 char* registers[] = {"r0","r2","r3","r4","r5","r6","r7","r7"};
 char* insts[] = {".string",".data",".extern",".entry"};
 
