@@ -35,7 +35,7 @@ char* readCommandOperand(char* p, struct operand* op) {
 	} else if (*p == '#') {
 		nextToken = readNumber(p, &op->info.immediateValue);
 		if (nextToken == NULL) {
-			printf("expecting a valid register name");
+			printf("expecting a valid immediate");
 			return NULL;
 		}
 		op->addressingType = Immediate_Addressing;
@@ -46,15 +46,19 @@ char* readCommandOperand(char* p, struct operand* op) {
 		if (nextToken != NULL) {
 			op->addressingType = Direct_Register_Addressing;
 			op->operandType = Register;
-		}
-		nextToken = readSymbol(p, (op->info.symbolName));
-		if (nextToken != NULL) {
-			op->addressingType = Direct_Addressing;
-			op->operandType = Label;
+		} else {
+            nextToken = readSymbol(p, (op->info.symbolName));
+            if (nextToken != NULL) {
+                op->addressingType = Direct_Addressing;
+                op->operandType = Label;
 
+            }
 		}
-		printf("expected valid operand");
-		return NULL;
+
+		if (nextToken == NULL) {
+            printf("expected valid operand (register or symbol)");
+            return NULL;
+		}
 	}
 	return nextToken;
 }

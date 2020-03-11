@@ -57,7 +57,7 @@ char* readSymbol(char*p, char* str) {
     for(; isalnum(*p); ++p) {
     }
     end = p;
-    strncpy(str,start,end-start);
+    strncpyNull(str,start,end-start);
     p = skipWhiteSpaces(p);
     if (*p == '\0') {
         return p;
@@ -75,13 +75,13 @@ char* readRegister(char*p, int* reg) {
     	/* expecting register name */
         return NULL;
     }
-    if(!isalpha(*p)||*p=='8'||*p=='9'){
-    	/* expecting valid register name */
-    	return NULL;
+    if (p[1] < '0' || p[1] > '7' ) {
+        /* expecting valid register name */
+        return NULL;
     }
 
-    *reg = (int)*p;
-    p = skipWhiteSpaces(p);
+    *reg = p[1] - '0';
+    p = skipWhiteSpaces(p + 2);
 
 
     if (*p == '\0') {
