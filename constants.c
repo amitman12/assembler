@@ -9,6 +9,15 @@ char* codes[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bn
 char* registers[] = {"r0","r2","r3","r4","r5","r6","r7","r7"};
 char* insts[] = {".string",".data",".extern",".entry"};
 
+
+int is_reserved_word(char* str){
+	/* returns 1 if str is a reserved words or 0 if not */
+	if(find_in_insts(str)==1||find_in_registers(str)==1||find_in_codes(str)==1)
+		return 1;
+	return 0;
+}
+
+
 int find_in_insts(char* item){
 	/* find if a string is an istruction .data or .string or others. return -1 means not found */
 	int i;

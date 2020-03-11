@@ -5,7 +5,7 @@
 #include "constants.h"
 
 struct symbol {
-	char label[MAX_LABEL_LENGTH];
+	char label[MAX_LABEL];
 	int address;
 	/* type is enum in constants.h */
 	int type;
@@ -23,6 +23,7 @@ static struct symboltable table = {
 
 
 struct symbol* find_symbol(char* p) {
+	/* look for label in symboltable returns 0 on failure*/
 	struct symbol* temp = table.head;
 	while (temp != NULL) {
 		if (strcmp(p, temp->label))
@@ -92,7 +93,7 @@ struct symbol* create_symbol(char* name,int address, int type,int location){
 	ptr->next = NULL;
 	return ptr;
 }
-void update_symbol(int instruction_count){
+void update_data_symbol(int instruction_count){
 	struct symbol* node;
 	node = table.head;
 	while(node!=NULL){

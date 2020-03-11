@@ -8,9 +8,19 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+
+int checkLabel(char* label);
+
+char* find_last_quote(char*p);
+
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);
 
 int addressing_check_2operands(char*);
-
+char* skipWhiteSpaces(char* );
+char* readSymbol(char*, char*);
+char* readNumber(char*, int* );
+char* readToken(char*, char* );
+char* readRegister(char*, int*);
+int isDelimiter(char, char*);
 #endif /* UTILS_H_ */
