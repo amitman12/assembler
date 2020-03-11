@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "firstpass.h"
 #include "assembler.h"
+#include "symboltable.h"
 #include "utils.h"
 #include <errno.h>
 #include <ctype.h>

@@ -25,6 +25,6 @@ struct symbol* create_symbol(char* name,int address, int type,int location);
 
 
 /*adds 100 to all addresses of data symbols*/
-void update_symbol(int);
+void update_data_symbol(int);
 
 #endif /* SYMBOLTABLE_H_ */

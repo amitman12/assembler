@@ -4,9 +4,43 @@
  *  Created on: Mar 7, 2020
  *      Author: user
  */
+#include <ctype.h>
 #include "utils.h"
 #include "constants.h"
 #include "symboltable.h"
+char* c = "";
+
+int checkDotString(char* arg, int flag, char* str){
+	/* .string line */
+	/* arg points to first non space/tab in line after .string */
+	/* copies label in arg into str */
+	int pos = 0;
+	char* end;
+	char* temp[MAX_CMD];
+	end = find_last_quote(arg);
+	while(isprint(*arg) && arg<end){
+
+	}
+	while(isprint(*arg)){
+		if(*arg=='\\'){
+			while(*(arg+1)=='\\'){
+				strncpy(str+pos,arg,1);
+				pos++;
+				arg++;
+			}
+			if(*arg=='\0'){
+				strncpy(str+pos,arg,1);
+
+			}
+			if(!isprint(*arg+1)){
+				return -1;
+			}
+		}
+	}
+
+}
+
+
 
 int checkLabel(char* label){
 	/* returns 1 if label doesn't already exist, and is legal */
@@ -34,7 +68,7 @@ char* find_last_quote(char*p){
 		}
 		p++;
 	}
-	return p;
+	return last;
 }
 
 
@@ -42,8 +76,7 @@ char* find_last_quote(char*p){
 char* readSymbol(char*p, char* str) {
 	/* puts label into given str*/
 	/*returns pointer to comma at end of symbol. or pointer to end of string if none exist. NULL on fail*/
-	char* label;
-	char*start;
+	char* start;
 	char*end;
 	p = skipWhiteSpaces(p);
     if (!isalpha(*p)) {
@@ -98,7 +131,6 @@ char* readNumber(char*p, int* number) {
 	/* returns NULL on error, returns pointer to comma at end of operand if there is one */
 	char*start;
 	char*end;
-	char* str;
 	start = p;
 	if(*p=='+'||*p=='-'){
 		p++;
