@@ -21,25 +21,28 @@
 #include <ctype.h>
 
 
-int secondPass(struct assemblerContext* context){
-	/* returns 0 on success, otherwise returns number of errors */
+int secondPass(struct assemblerContext *context) {
+    /* returns 0 on success, otherwise returns number of errors */
     int result;
-    char* line;
-    FILE* inputFile = fopen(context->fileName,"r");
+    char *line;
+    FILE *inputFile = fopen(context->fileName, "r");
     if (inputFile == NULL) {
-        fprintf(stderr,"could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
+        fprintf(stderr, "could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
         return -1;
     }
 
-    line = (char*)malloc(MAX_CMD);
-    if(line==NULL){
-        fprintf(stderr,"could not allocate memory error: %s\n", strerror(errno));
+    line = (char *) malloc(MAX_CMD);
+    if (line == NULL) {
+        fprintf(stderr, "could not allocate memory error: %s\n", strerror(errno));
+        //TODO error handling
     }
 
+    //TODO create objFile name with the relevant extension. then open it
+
     while (fgets(line, MAX_CMD, inputFile)) {
-    	chomp(line);
+        chomp(line);
         ++context->lineNumber;
-        if ((result = processLine(context, line,SECOND_PASS)) < 0) {
+        if ((result = processLine(context, line, SECOND_PASS)) < 0) {
             ++context->errorCount;
         }
     }
