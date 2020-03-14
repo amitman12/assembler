@@ -34,7 +34,54 @@ char* find_last_quote(char*p){
 	return last;
 }
 
+char* readString(char*p, char*str, int* len){
+	/* start - p points to first argument in string */
+	/* end - p points to end of line */
+	/* puts string in str */
+	/* puts the number of characters in the string in len, including \0 */
+	int count = 0;
+	char* end;
+	char* start;
+	end = find_last_quote(p);
+	p = skipWhiteSpaces(p);
+	if(*p=='\0'){
+		*len = count;
+		return p;
+	}
 
+	if(*p!='\"'){
+		/* illegal string */
+		*len = -1;
+		return NULL;
+	}
+	p++;
+	start = p;
+	while(p<end&&isprint(*p)){
+		count++;
+		p++;
+	}
+	if(p<end){
+		/* illegal string */
+		*len = SYNTAX_ERROR;
+		return NULL;
+	}
+	if(count==0){
+		/* empty string */
+		*len = EMPTY_STRING;
+		return NULL;
+	}
+	p++;
+	p = skipWhiteSpaces(p);
+	if(*p=='\0'){
+		/*legal string */
+		/*put len of string in len*/
+		/*copies string to str*/
+		*len = count+1;
+		strncpy(str,start,count);
+		return p;
+	}
+	return NULL;
+}
 
 char* readSymbol(char*p, char* str) {
 	/* puts label into given str*/
@@ -66,14 +113,17 @@ char* readRegister(char*p, int* reg) {
 	/* returns pointer to comma at end of operand if there is one, returns NULL on failure*/
     if ((*p)!='r') {
     	/* expecting register name */
+    	*reg = INVALID_REGISTER;
         return NULL;
     }
-    if(!isalpha(*p)||*p=='8'||*p=='9'){
+    p++;
+    if(*p<'0'||*p>'7'){
     	/* expecting valid register name */
+    	*reg = INVALID_REGISTER;
     	return NULL;
     }
-
-    *reg = (int)*p;
+    *reg = *p - '0';
+    p++;
     p = skipWhiteSpaces(p);
 
 
@@ -89,18 +139,20 @@ char* readRegister(char*p, int* reg) {
 
 
 
-char* readNumber(char*p, int* number) {
+char* readNumber(char*p, int* number, int* err_type) {
 	/* puts immediate in number */
+	/* puts error type in err_type 0 means success*/
 	/* returns NULL on error, returns pointer to comma at end of operand if there is one */
 	char*start;
 	char*end;
+	p = skipWhiteSpaces(p);
 	start = p;
 	if(*p=='+'||*p=='-'){
 		p++;
 	}
 
 	if(*p=='\0'||!isdigit(*p)){
-		printf("expecting immediate");
+		*err_type = EMPTY_IMMEDIATE;
 		return NULL;
 	}
 	while(isdigit(*p)){
@@ -113,8 +165,11 @@ char* readNumber(char*p, int* number) {
 
 	p = skipWhiteSpaces(p);
 	if(*p==','||*p=='\0'){
+		*err_type=0;
 		return p;
 	}
+
+	*err_type=SYNTAX_ERROR;
 	return NULL;
 }
 
@@ -129,7 +184,19 @@ char* readToken(char*p, char* delimiters) {
     return p;
 }
 
-
+int is_legal(char* label){
+	/* -1 on illegal label and 0 on legal */
+	if(!isalpha(*label)){
+		return SYNTAX_ERROR;
+	}
+	while(isalnum(*label)){
+		label++;
+	}
+	if(*label!='\0'){
+		return SYNTAX_ERROR;
+	}
+	return 0;
+}
 
 char* skipWhiteSpaces(char* p) {
 	/*increments p to skip tabs and spaces */

@@ -14,7 +14,7 @@ struct symbol* find_symbol(struct symboltable* table, char* p) {
 	/* look for label in symboltable returns 0 on failure*/
 	struct symbol* temp = table->head;
 	while (temp != NULL) {
-		if (strcmp(p, temp->label))
+		if (strcmp(p, temp->label)==0)
 			return temp;
 		temp = temp->next;
 	}
@@ -90,7 +90,6 @@ void update_data_symbol(struct symboltable* table, int instruction_count){
 		}
 		node = node->next;
 	}
-
 }
 
 int checkLabel(struct symboltable* table, char* label){

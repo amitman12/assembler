@@ -1,0 +1,12 @@
+test7.as:2: ERROR: command stop does not accept arguments
+test7.as:5: ERROR: command stop does not accept arguments
+test7.as:9: ERROR: command stop does not accept arguments
+test7.as:13: ERROR: command stop does not accept arguments
+test7.as:17: ERROR: command stop does not accept arguments
+test7.as:21: ERROR: command stop does not accept arguments
+test7.as:24: ERROR: label already exists
+test7.as:27: ERROR: label already exists
+test7.as:31: ERROR: label already exists
+test7.as:35: ERROR: label already exists
+test7.as:39: ERROR: label already exists
+test7.as:43: ERROR: command stop does not accept arguments

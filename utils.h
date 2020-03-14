@@ -11,13 +11,15 @@
 
 char* find_last_quote(char*p);
 
+int is_legal(char* label);
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);
 void chomp(char*);
 int addressing_check_2operands(char*);
 char* skipWhiteSpaces(char* );
+char* readString(char*,char*,int*);
 char* readSymbol(char*, char*);
-char* readNumber(char*, int* );
+char* readNumber(char*, int* ,int*);
 char* readToken(char*, char* );
 char* readRegister(char*, int*);
 int isDelimiter(char, char*);

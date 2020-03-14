@@ -1,11 +1,8 @@
 # comments
 
-* reformat all fprintf to include file:line: error:...
-* move directive processing to separate functions
-* !!!!! remove the \t and " " from directive parsing
-* create readString in utils
-* use readNumber in ".data ", ".data\t" processing
-* create tests
+
+
+
 
 
 * rename file: symboletable to symbol_table

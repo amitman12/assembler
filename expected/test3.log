@@ -1,0 +1,37 @@
+test3.as:2: ERROR: label can't be a reserved word
+test3.as:5: ERROR: expected valid operand
+test3.as:5: ERROR: command lea requires two operands
+test3.as:8: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:11: ERROR: expected valid operand
+test3.as:11: ERROR: command lea requires two operands
+test3.as:14: ERROR: expected valid operand
+test3.as:14: ERROR: command lea requires two operands
+test3.as:17: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:20: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:23: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:32: ERROR: expecting non empty label
+test3.as:35: ERROR: command expected
+test3.as:38: ERROR: syntax error: unknown command and whitespace after label are illegal
+test3.as:41: ERROR: label too long
+test3.as:44: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:47: ERROR: label already exists
+test3.as:50: ERROR: illegal label
+test3.as:53: ERROR: label can't be a reserved word
+test3.as:57: ERROR: label can't be a reserved word
+test3.as:64: ERROR: expected valid operand
+test3.as:64: ERROR: command lea requires two operands
+test3.as:67: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:70: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:73: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:76: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:79: ERROR: expected valid operand
+test3.as:79: ERROR: command lea requires two operands
+test3.as:82: ERROR: expected valid operand
+test3.as:82: ERROR: command lea requires two operands
+test3.as:85: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:88: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:91: ERROR: source addressing type of command lea has to be Direct Addressing
+test3.as:95: ERROR: expected valid operand
+test3.as:95: ERROR: command lea requires two operands
+test3.as:98: ERROR: expected valid operand
+test3.as:98: ERROR: command lea requires two operands

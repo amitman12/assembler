@@ -1,0 +1,25 @@
+test2.as:2: ERROR: expected valid operand
+test2.as:2: ERROR: command cmp requires two operands
+test2.as:14: ERROR: expected valid operand
+test2.as:14: ERROR: command cmp requires two operands
+test2.as:26: ERROR: expected valid operand
+test2.as:26: ERROR: command cmp requires two operands
+test2.as:29: ERROR: expected valid operand
+test2.as:29: ERROR: command cmp requires two operands
+test2.as:32: ERROR: expected valid operand
+test2.as:32: ERROR: command cmp requires two operands
+test2.as:35: ERROR: expected valid operand
+test2.as:35: ERROR: command cmp requires two operands
+test2.as:38: ERROR: expected valid operand
+test2.as:38: ERROR: command cmp requires two operands
+test2.as:56: ERROR: expecting non empty label
+test2.as:59: ERROR: command expected
+test2.as:62: ERROR: syntax error: unknown command and whitespace after label are illegal
+test2.as:65: ERROR: label too long
+test2.as:71: ERROR: label already exists
+test2.as:74: ERROR: illegal label
+test2.as:77: ERROR: label can't be a reserved word
+test2.as:80: ERROR: label can't be a reserved word
+test2.as:83: ERROR: label can't be a reserved word
+test2.as:90: ERROR: expected valid operand
+test2.as:90: ERROR: command cmp requires two operands

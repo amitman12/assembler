@@ -25,6 +25,17 @@
 #define COMMAND_EXPECTED -7
 #define COMMAND_DOESNT_EXIST -8
 #define ADDRESSING_ERROR -9
+#define DOT_STRING 7
+#define DOT_DATA 5
+#define DOT_EXTERN 7
+#define DOT_ENTRY -6
+#define EMPTY_STRING -10
+#define EMPTY_IMMEDIATE -11
+#define ILLEGAL_LABEL -12
+#define INVALID_REGISTER -13
+#define FIRST_PASS 1
+#define SECOND_PASS 2
+#define BYTES_IN_WORD 2
 
 
 

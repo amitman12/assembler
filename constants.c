@@ -15,8 +15,16 @@ char* insts[] = {".string",".data",".extern",".entry"};
 
 int is_reserved_word(char* str){
 	/* returns 1 if str is a reserved words or 0 if not */
-	if(find_in_insts(str)==1||find_in_registers(str)==1||find_in_codes(str)==1)
+	if(find_in_insts(str)!=-1){
 		return 1;
+	}
+	if(find_in_registers(str)!=-1){
+		return 1;
+	}
+	if(find_in_codes(str)!=-1){
+		return 1;
+	}
+
 	return 0;
 }
 
