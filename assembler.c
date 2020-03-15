@@ -7,6 +7,78 @@
 #include "firstpass.h"
 
 
+int codeCommandGroup1(char* cmd, struct operand op1, struct operand op2){
+	int command_word = 0;
+	int command_word_part1; /* opcode*/
+	int command_word_part2; /* source addressing method */
+	int command_word_part3; /* dest addressing method */
+	int command_word_part4; /* A,R,E fields */
+	int second_word = 0;
+	int third_word = 0;
+	if(strcmp(cmd,"mov")==0){
+		command_word_part1 = 0;
+	}
+	if(strcmp(cmd,"add")==0){
+		command_word_part1 = 0;
+		command_word_part1 = add;
+		command_word_part1 = command_word_part1 << 12;
+	}
+	if(strcmp(cmd,"sub")==0){
+		command_word_part1 = 0;
+		command_word_part1 = sub;
+		command_word_part1 = command_word_part1 << 12;
+	}
+	if(op1.addressingType == Immediate_Addressing){
+		command_word_part2 = 1;
+		command_word_part2 = command_word_part2 << 7;
+
+	}
+	if(op1.addressingType == Direct_Addressing){
+		command_word_part2 = 1;
+		command_word_part2 = command_word_part2 << 8;
+	}
+	if(op1.addressingType == Indirect_Register_Addressing){
+		command_word_part2 = 1;
+		command_word_part2 = command_word_part2 << 9;
+	}
+	if(op1.addressingType == Direct_Register_Addressing){
+		command_word_part2 = 1;
+		command_word_part2 = command_word_part2 << 10;
+	}
+	/* op2 addressing type can't be immediate addressing */
+	if(op2.addressingType == Direct_Addressing){
+		command_word_part3 = 1;
+		command_word_part3 = command_word_part3 << 4;
+	}
+	if(op1.addressingType == Indirect_Register_Addressing){
+		command_word_part3 = 1;
+		command_word_part3 = command_word_part3 << 5;
+	}
+	if(op1.addressingType == Direct_Register_Addressing){
+		command_word_part3 = 1;
+		command_word_part3 = command_word_part3 << 6;
+	}
+	command_word_part4 = 1;
+	command_word_part4 = command_word_part4 << 2;
+	/* A bit is 1, R and E bits are 0 for the first word in command */
+	command_word = command_word_part1 + command_word_part2 + command_word_part3 + command_word_part4;
+	/* command_word now has the binary code for the first word in command line */
+    if ((op1.addressingType == Direct_Register_Addressing || op1.addressingType == Indirect_Register_Addressing)
+        && (op2.addressingType == Direct_Register_Addressing || op2.addressingType == Indirect_Register_Addressing)) {
+        /* we only need one extra word in machine code for both operands */
+    	/* bits 3 - 5 get dest register */
+    	/* bits 6 - 8 get src register */
+    	/* bits 0 - 2 get A,R,E fields */
+    	/* bits 9 - 14 get zero */
+    }
+	/* if we get here it means we need two more words */
+
+
+
+	int bit_count = 0;
+	return 1;
+}
+
 int codeNumber(struct assemblerContext *context, int number, int count) {
     /* reallocates space for .data argument and writes it in memory in correct base */
     /* returns 0 on success*/
@@ -30,7 +102,7 @@ int codeString(struct assemblerContext *context, char *str) {
             return result;
         }
     }
-    // copy the null termination
+    /* copy the null termination */
     return codeNumber(context, p - str + 1, 0);
 }
 
@@ -158,7 +230,7 @@ int processDotString(struct assemblerContext *context, char *args, int pass) {
     }
     /* string is in str*/
     if (pass == FIRST_PASS) {
-        codeString(context->memory, str);
+        codeString(context, str);
     }
     /* we need one word of machine code per char in the string(including \0) plus one for the command */
     return len + 1;
@@ -310,7 +382,7 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
             return 3;
         }
     }
-
+    codeCommandGroup1(cmd,op1,op2);
     /* successful parse and second parse - we code here */
     /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
     return 1;

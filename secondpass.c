@@ -34,10 +34,11 @@ int secondPass(struct assemblerContext *context) {
     line = (char *) malloc(MAX_CMD);
     if (line == NULL) {
         fprintf(stderr, "could not allocate memory error: %s\n", strerror(errno));
-        //TODO error handling
+        free(line);
+        return -1;
     }
 
-    //TODO create objFile name with the relevant extension. then open it
+    /*TODO create objFile name with the relevant extension. then open it*/
 
     while (fgets(line, MAX_CMD, inputFile)) {
         chomp(line);
