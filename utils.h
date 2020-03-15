@@ -10,7 +10,7 @@
 
 
 char* find_last_quote(char*p);
-
+void binToOct(unsigned short int num);
 int is_legal(char* label);
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);

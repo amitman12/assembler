@@ -36,6 +36,7 @@
 #define FIRST_PASS 1
 #define SECOND_PASS 2
 #define BYTES_IN_WORD 2
+#define BITS_IN_WORD 15
 
 
 

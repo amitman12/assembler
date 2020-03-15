@@ -8,7 +8,28 @@
 #include "utils.h"
 #include "constants.h"
 #include "symboltable.h"
+#include <math.h>
 char* c = "";
+
+
+void binToOct(unsigned short int num){
+	/* convert number to octal representation */
+	int i;
+	int count;
+	int temp;
+	count=0;
+	temp = 0;
+	for(i=0;i<BITS_IN_WORD;i++){
+		if(count==3){
+			count=0;
+			/* temp has value from 0 to 7 */
+			/* putchar into file - the character in temp */
+		}
+		temp = temp + pow(2,count)*(num&1);
+		count++;
+		num = num>>1;
+	}
+}
 
 
 /* remove trailing \r and \n from a string */
