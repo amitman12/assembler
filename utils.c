@@ -9,10 +9,16 @@
 #include "constants.h"
 #include "symboltable.h"
 #include <math.h>
-char* c = "";
 
 
-void binToOct(unsigned short int num){
+FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
+    char fileNameWithExt [FILENAME_MAX];
+    sprintf(fileNameWithExt, "%s.%s", fileName, ext);
+    return fopen(fileNameWithExt, mode);
+}
+
+/* output must be of at least X chars */
+char* binToOct(signed short int num, char* output){
 	/* convert number to octal representation */
 	int i;
 	int count;
@@ -29,8 +35,15 @@ void binToOct(unsigned short int num){
 		count++;
 		num = num>>1;
 	}
+	return output;
 }
 
+/*
+test() {
+    char tmpBuffer[100];
+    fprintf("%s", binToOct(-9, tmpBuffer));
+}
+*/
 
 /* remove trailing \r and \n from a string */
 void chomp(char* str) {

@@ -38,7 +38,7 @@ union RegisterWord {
         unsigned int dstRegister: 3;
         unsigned int srcRegister: 3;
         unsigned int unused: 6;
-    }info;
+    } info;
 };
 
 union ReferenceWord {
@@ -48,7 +48,7 @@ union ReferenceWord {
         unsigned int relocatable: 1;
         unsigned int absolute: 1;
         unsigned int address: 12;
-    }info;
+    } info;
 };
 
 union ImmediateWord {
@@ -58,29 +58,29 @@ union ImmediateWord {
         unsigned int relocatable: 1;
         unsigned int absolute: 1;
         unsigned int address: 12;
-    }info;
+    } info;
 };
 
-int outDirective(struct assemblerContext* context, char* label){
-	/* this function takes care of .string .data .entry and .external lines */
-	/* as in puts labels in output file according to instructions */
-	/* also copies all.string and .data definitions from data image to output file */
-	return -1;
+int outDirective(struct assemblerContext *context, char *label) {
+    /* this function takes care of .string .data .entry and .external lines */
+    /* as in puts labels in output file according to instructions */
+    /* also copies all.string and .data definitions from data image to output file */
+    return -1;
 }
 
 
-
-int codeCommand(struct assemblerContext* context, struct commandInfo *cmdInfo, struct operand* op1, struct operand* op2) {
-	/* this function gets a command and creates the binary words corresponding to that command*/
-	/* uses         to put the converted machine code in output file */
+int
+codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struct operand *op1, struct operand *op2) {
+    /* this function gets a command and creates the binary words corresponding to that command*/
+    /* uses         to put the converted machine code in output file */
     unsigned short int words[3]; /* create an array of max number of command words */
     union OpCodeWord *commandWord;
-    union RegisterWord*registerWord1;
-    union RegisterWord*registerWord2;
-    union ImmediateWord* immWord1;
-    union ImmediateWord* immWord2;
-    union ReferenceWord* refWord1;
-    union ReferenceWord* refWord2;
+    union RegisterWord *registerWord1;
+    union RegisterWord *registerWord2;
+    union ImmediateWord *immWord1;
+    union ImmediateWord *immWord2;
+    union ReferenceWord *refWord1;
+    union ReferenceWord *refWord2;
     int numWords = 1;
     memset(words, 0, sizeof(words));
     /* set words to zero */
@@ -89,131 +89,132 @@ int codeCommand(struct assemblerContext* context, struct commandInfo *cmdInfo, s
     commandWord->info.opcode = cmdInfo->commandNumber;
     commandWord->info.absolute = 1;
 
-    commandWord->info.srcImmediate = (op1->addressingType == Immediate_Addressing);
-    commandWord->info.srcDirect = (op1->addressingType == Direct_Addressing);
-    commandWord->info.srcIndirectRegister = (op1->addressingType == Indirect_Register_Addressing);
-    commandWord->info.srcDirectRegister = (op1->addressingType == Direct_Register_Addressing);
+    if (op1 == NULL) {
+        /*commands stop,rts*/
+        /* these commands only have one word which is the command word */
+    } else {
+        /* we have at least one operand */
+        commandWord->info.srcImmediate = (op1->addressingType == Immediate_Addressing);
+        commandWord->info.srcDirect = (op1->addressingType == Direct_Addressing);
+        commandWord->info.srcIndirectRegister = (op1->addressingType == Indirect_Register_Addressing);
+        commandWord->info.srcDirectRegister = (op1->addressingType == Direct_Register_Addressing);
 
-    commandWord->info.dstImmediate = (op2->addressingType == Immediate_Addressing);
-    commandWord->info.dstDirect = (op2->addressingType == Direct_Addressing);
-    commandWord->info.dstIndirectRegister = (op2->addressingType == Indirect_Register_Addressing);
-    commandWord->info.dstDirectRegister = (op2->addressingType == Direct_Register_Addressing);
-    /* command_word now has the binary code for the first word in command line */
+        if (op2 == NULL) {
+            /* we have exactly one operand */
+            if (op1->addressingType == Direct_Register_Addressing ||
+                op1->addressingType == Indirect_Register_Addressing) {
+                /* first operand is a register  - this means the second one has to be a label or immediate*/
+                /* in command group 1, second operand can't be immediate - so that means second operand is a label */
+                registerWord1 = (union RegisterWord *) &words[1];
+                /* initialize to zero */
+                registerWord1->info.srcRegister = 0;
+                registerWord1->info.dstRegister = op1->info.registerId;
+                registerWord1->info.absolute = 1;
+            } else if (op1->addressingType == Immediate_Addressing) {
+                /* first operand is a number*/
+                immWord1 = (union ImmediateWord *) &words[1];
+                immWord1->info.address = op1->info.immediateValue;
+                immWord1->info.absolute = 1;
+            } else {
+                /* first operand is a label */
+                refWord1 = (union ReferenceWord *) &words[1];
+                if (find_symbol(&context->table, op1->info.symbolName) == NULL) {
+                    /*operand 1 is an external label*/
+                    /* we leave bits 3 to 14 untouched */
+                    refWord1->info.external = 1;
+                } else {
+                    /* operand 2 is a label defined in this file */
+                    refWord1->info.address = find_symbol(&context->table, op1->info.symbolName)->address;
+                    refWord1->info.absolute = 1;
+                }
+            }
+        } else {
+            commandWord->info.dstImmediate = (op2->addressingType == Immediate_Addressing);
+            commandWord->info.dstDirect = (op2->addressingType == Direct_Addressing);
+            commandWord->info.dstIndirectRegister = (op2->addressingType == Indirect_Register_Addressing);
+            commandWord->info.dstDirectRegister = (op2->addressingType == Direct_Register_Addressing);
 
-    if(op1==NULL){
-    	/*commands stop,rts*/
-    	/* these commands only have one word which is the command word */
-    	/* we already coded that word so all we need to do here is return */
-    }
-    if(op2==NULL){
-    	/* op1 is dst operand */
-    	/* op2 does not exist */
-    	/*commands clr,not,inc,dec,jmp,bne,red,prn,jsr */
-        if(op1->addressingType == Direct_Register_Addressing||op1->addressingType==Indirect_Register_Addressing){
-        	/* first operand is a register  - this means the second one has to be a label or immediate*/
-        	/* in command group 1, second operand can't be immediate - so that means second operand is a label */
-            registerWord1 = (union RegisterWord*)&words[1];
-            /* initialize to zero */
-        	registerWord1->info.srcRegister = 0;
-        	registerWord1->info.dstRegister = op1->info.registerId;
-        	registerWord1->info.absolute = 1;
+            if ((op1->addressingType == Direct_Register_Addressing ||
+                 op1->addressingType == Indirect_Register_Addressing)
+                && (op2->addressingType == Direct_Register_Addressing ||
+                    op2->addressingType == Indirect_Register_Addressing)
+                && (strcmp(cmdInfo->command, "mov") == 0 || strcmp(cmdInfo->command, "sub") == 0 ||
+                    strcmp(cmdInfo->command, "add") == 0)) {
+                /* we only need one extra word in machine code for both operands */
+                ++numWords;
+                registerWord1 = (union RegisterWord *) &words[1];
+                registerWord1->info.absolute = 1;
+                registerWord1->info.dstRegister = op2->info.registerId;
+                registerWord1->info.srcRegister = op1->info.registerId;
+
+                /* bits 3 - 5 get dest register */
+                /* bits 6 - 8 get src register */
+                /* bits 0 - 2 get A,R,E fields  - absolute is 1 and rest are 0*/
+                /* bits 9 - 14 get zero */
+            }
+            numWords += 2;
+            /* if we get here it means we need two more words */
+            if (op1->addressingType == Direct_Register_Addressing ||
+                op1->addressingType == Indirect_Register_Addressing) {
+                /* first operand is a register  - this means the second one has to be a label or immediate*/
+                /* in command group 1, second operand can't be immediate - so that means second operand is a label */
+                registerWord1 = (union RegisterWord *) &words[1];
+                /* initialize to zero */
+                registerWord1->info.dstRegister = 0;
+                registerWord1->info.srcRegister = op1->info.registerId;
+                registerWord1->info.absolute = 1;
+            } else if (op1->addressingType == Immediate_Addressing) {
+                /* first operand is a number*/
+                immWord1 = (union ImmediateWord *) &words[1];
+                immWord1->info.address = op1->info.immediateValue;
+                immWord1->info.absolute = 1;
+            } else {
+                /* first operand is a label */
+                refWord1 = (union ReferenceWord *) &words[1];
+                if (find_symbol(&context->table, op1->info.symbolName) == NULL) {
+                    /*operand 1 is an external label*/
+                    /* we leave bits 3 to 14 untouched */
+                    refWord1->info.external = 1;
+                }
+                /* operand 2 is a label defined in this file */
+                refWord1->info.address = find_symbol(&context->table, op1->info.symbolName)->address;
+                refWord1->info.absolute = 1;
+            }
+
+            if (op2->addressingType == Direct_Register_Addressing ||
+                op2->addressingType == Indirect_Register_Addressing) {
+                /* second operand is a register */
+                registerWord2 = (union RegisterWord *) &words[2];
+                registerWord2->info.srcRegister = 0;
+                registerWord2->info.dstRegister = op2->info.registerId;
+                registerWord2->info.absolute = 1;
+            } else if (op2->addressingType == Immediate_Addressing) {
+                /* second operand is an immediate*/
+                immWord2 = (union ImmediateWord *) &words[2];
+                immWord2->info.address = op2->info.immediateValue;
+                immWord2->info.absolute = 1;
+            } else {
+                /* second operand is a label */
+                refWord2 = (union ReferenceWord *) &words[2];
+                if (find_symbol(&context->table, op2->info.symbolName) == NULL) {
+                    /*operand 2 is an external label*/
+                    /* we leave bits 3 to 14 untouched */
+                    refWord2->info.external = 1;
+                }
+                /* operand 2 is a label defined in this file */
+                refWord2->info.address = find_symbol(&context->table, op2->info.symbolName)->address;
+                refWord2->info.absolute = 1;
+            }
         }
-        else if(op1->addressingType == Immediate_Addressing){
-        	/* first operand is a number*/
-            immWord1 = (union ImmediateWord*)&words[1];
-        	immWord1->info.address = op1->info.immediateValue;
-        	immWord1->info.absolute = 1;
-        }
-        else{
-        	/* first operand is a label */
-            refWord1 = (union ReferenceWord*)&words[1];
-        	if(find_symbol(&context->table, op1->info.symbolName)==NULL){
-        		/*operand 1 is an external label*/
-        		/* we leave bits 3 to 14 untouched */
-            	refWord1->info.external = 1;
-        	}
-        	/* operand 2 is a label defined in this file */
-        	refWord1->info.address = find_symbol(&context->table, op1->info.symbolName)->address;
-        	refWord1->info.absolute = 1;
-        }
-
-    }
-    /* both operands are not NULL */
-    /* op1 is src operand and op2 is dst operand */
-    /* commands mov,cmp,add,sub,lea */
-
-    if ((op1->addressingType == Direct_Register_Addressing ||
-         op1->addressingType == Indirect_Register_Addressing)
-        && (op2->addressingType == Direct_Register_Addressing ||
-            op2->addressingType == Indirect_Register_Addressing)
-		&& (strcmp(cmdInfo->command,"mov")==0||strcmp(cmdInfo->command,"sub")==0||strcmp(cmdInfo->command,"add")==0	)) {
-        /* we only need one extra word in machine code for both operands */
-    	++numWords;
-        registerWord1 = (union RegisterWord*)&words[1];
-        registerWord1->info.absolute = 1;
-        registerWord1->info.dstRegister = op2->info.registerId;
-        registerWord1->info.srcRegister = op1->info.registerId;
-
-        /* bits 3 - 5 get dest register */
-        /* bits 6 - 8 get src register */
-        /* bits 0 - 2 get A,R,E fields  - absolute is 1 and rest are 0*/
-        /* bits 9 - 14 get zero */
-    }
-	numWords+=2;
-    /* if we get here it means we need two more words */
-    if(op1->addressingType == Direct_Register_Addressing||op1->addressingType==Indirect_Register_Addressing){
-    	/* first operand is a register  - this means the second one has to be a label or immediate*/
-    	/* in command group 1, second operand can't be immediate - so that means second operand is a label */
-        registerWord1 = (union RegisterWord*)&words[1];
-        /* initialize to zero */
-    	registerWord1->info.dstRegister = 0;
-    	registerWord1->info.srcRegister = op1->info.registerId;
-    	registerWord1->info.absolute = 1;
-    }
-    else if(op1->addressingType == Immediate_Addressing){
-    	/* first operand is a number*/
-        immWord1 = (union ImmediateWord*)&words[1];
-    	immWord1->info.address = op1->info.immediateValue;
-    	immWord1->info.absolute = 1;
-    }
-    else{
-    	/* first operand is a label */
-        refWord1 = (union ReferenceWord*)&words[1];
-    	if(find_symbol(&context->table, op1->info.symbolName)==NULL){
-    		/*operand 1 is an external label*/
-    		/* we leave bits 3 to 14 untouched */
-        	refWord1->info.external = 1;
-    	}
-    	/* operand 2 is a label defined in this file */
-    	refWord1->info.address = find_symbol(&context->table, op1->info.symbolName)->address;
-    	refWord1->info.absolute = 1;
     }
 
-    if(op2->addressingType == Direct_Register_Addressing||op2->addressingType==Indirect_Register_Addressing){
-    	/* second operand is a register */
-        registerWord2 = (union RegisterWord*)&words[2];
-        registerWord2->info.srcRegister = 0;
-        registerWord2->info.dstRegister = op2->info.registerId;
-        registerWord2->info.absolute = 1;
-    	}
-    else if(op2->addressingType == Immediate_Addressing){
-    	/* second operand is an immediate*/
-        immWord2 = (union ImmediateWord*)&words[2];
-    	immWord2->info.address = op2->info.immediateValue;
-    	immWord2->info.absolute = 1;
-    }
-    else{
-    	/* second operand is a label */
-        refWord2 = (union ReferenceWord*)&words[2];
-    	if(find_symbol(&context->table, op2->info.symbolName)==NULL){
-    		/*operand 2 is an external label*/
-    		/* we leave bits 3 to 14 untouched */
-        	refWord2->info.external = 1;
-    	}
-    	/* operand 2 is a label defined in this file */
-    	refWord2->info.address = find_symbol(&context->table, op2->info.symbolName)->address;
-    	refWord2->info.absolute = 1;
-    }
+
+/* command_word now has the binary code for the first word in command line */
+
+/* both operands are not NULL */
+/* op1 is src operand and op2 is dst operand */
+/* commands mov,cmp,add,sub,lea */
+
 
     return 1;
 }
@@ -521,7 +522,7 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
             return 3;
         }
     }
-    codeCommand(context,cmdInfo, &op1, &op2);
+    codeCommand(context, cmdInfo, &op1, &op2);
     /* successful parse and second parse - we code here */
     /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
     return 1;

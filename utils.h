@@ -8,9 +8,11 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <stdio.h>
 
+FILE* fopenFileWithExt(char* fileName, char* mode, char* ext);
 char* find_last_quote(char*p);
-void binToOct(unsigned short int num);
+char* binToOct(signed short int num, char* output);
 int is_legal(char* label);
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);

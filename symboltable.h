@@ -40,7 +40,7 @@ void dealloc_symbol_table(struct symboltable* table);
 struct symbol* create_symbol(struct symboltable* table, char* name,int address, int type,int location);
 
 
-/*adds 100 to all addresses of data symbols*/
+/*adds IC+100 to all addresses of data symbols*/
 void update_data_symbol(struct symboltable* table, int);
 
 int checkLabel(struct symboltable* table, char* label);
