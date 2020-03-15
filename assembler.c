@@ -71,9 +71,12 @@ int outDirective(struct assemblerContext *context, char *label) {
 
 int
 codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struct operand *op1, struct operand *op2) {
-    /* this function gets a command and creates the binary words corresponding to that command*/
+	/* returns -1 if couldnt create/open output file*/
+	/* returns 0 on successful write to output file */
+    /* this function gets a command line and creates the binary words corresponding to that command*/
     /* uses         to put the converted machine code in output file */
     unsigned short int words[3]; /* create an array of max number of command words */
+    FILE* output = fopenFileWithExt(context->outputFileName,"w","ob");
     union OpCodeWord *commandWord;
     union RegisterWord *registerWord1;
     union RegisterWord *registerWord2;
@@ -81,7 +84,12 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
     union ImmediateWord *immWord2;
     union ReferenceWord *refWord1;
     union ReferenceWord *refWord2;
-    int numWords = 1;
+    int numWords;
+    numWords = 1;
+    if(output==NULL){
+    	fprintf(stderr,"could not create output file.\n");
+    	return -1;
+    }
     memset(words, 0, sizeof(words));
     /* set words to zero */
 
@@ -207,16 +215,18 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
             }
         }
     }
-
-
-/* command_word now has the binary code for the first word in command line */
-
-/* both operands are not NULL */
-/* op1 is src operand and op2 is dst operand */
-/* commands mov,cmp,add,sub,lea */
-
-
-    return 1;
+    if(numWords==1){
+    	fprintf(output, "%05\n",twosComplement(words[0]));
+    }
+    else if(numWords==2){
+    	fprintf(output, "%05\n",twosComplement(words[0]));
+    	fprintf(output, "%05\n",twosComplement(words[1]));
+    }
+    /* numWords==3 */
+	fprintf(output, "%05\n",twosComplement(words[0]));
+	fprintf(output, "%05\n",twosComplement(words[1]));
+	fprintf(output, "%05\n",twosComplement(words[2]));
+    return 0;
 }
 
 

@@ -8,8 +8,6 @@
 #include "utils.h"
 #include "constants.h"
 #include "symboltable.h"
-#include <math.h>
-
 
 FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
     char fileNameWithExt [FILENAME_MAX];
@@ -17,33 +15,25 @@ FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
     return fopen(fileNameWithExt, mode);
 }
 
-/* output must be of at least X chars */
-char* binToOct(signed short int num, char* output){
-	/* convert number to octal representation */
-	int i;
-	int count;
-	int temp;
-	count=0;
-	temp = 0;
-	for(i=0;i<BITS_IN_WORD;i++){
-		if(count==3){
-			count=0;
-			/* temp has value from 0 to 7 */
-			/* putchar into file - the character in temp */
-		}
-		temp = temp + pow(2,count)*(num&1);
-		count++;
-		num = num>>1;
-	}
-	return output;
+unsigned int twosComplement(int x) {
+    return (x >= 0) ? x : ((~((unsigned int)-x) & 0x7fff) + 1);
 }
 
-/*
-test() {
-    char tmpBuffer[100];
-    fprintf("%s", binToOct(-9, tmpBuffer));
+signed short int swapBits(signed short int num){
+	/*swapBits gets num and returns a number with swapped bits */
+	signed short int result;
+	int i;
+	result = 0;
+	for(i=0;i<BITS_IN_WORD;i++){
+		result = result + ((num&1)^1);
+		result = result<<1;
+		num = num<<1;
+	}
+	return result;
 }
-*/
+
+
+
 
 /* remove trailing \r and \n from a string */
 void chomp(char* str) {

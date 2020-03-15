@@ -10,9 +10,9 @@
 
 #include <stdio.h>
 
+unsigned int twosComplement(int x);
 FILE* fopenFileWithExt(char* fileName, char* mode, char* ext);
 char* find_last_quote(char*p);
-char* binToOct(signed short int num, char* output);
 int is_legal(char* label);
 int command_syntax_check(int,char*);
 int instruction_syntax_check(int,char*);

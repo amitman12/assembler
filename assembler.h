@@ -12,6 +12,7 @@
 
 struct assemblerContext {
     char* fileName;
+    char* outputFileName;
     struct symboltable table;
     int lineNumber;
     int errorCount;
