@@ -23,6 +23,7 @@ struct assemblerContext {
 
 struct commandInfo {
     char* command;
+    int commandNumber;
     int (*processCommand)(struct assemblerContext* context, struct commandInfo*, char* cmd, char* args, int pass);
 };
 

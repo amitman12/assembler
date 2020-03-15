@@ -6,77 +6,103 @@
 #include "constants.h"
 #include "firstpass.h"
 
+union OpCodeWord {
+    unsigned short int value;
+    struct {
+        unsigned int external: 1;
+        unsigned int relocatable: 1;
+        unsigned int absolute: 1;
+        unsigned int dstImmediate: 1;
+        unsigned int dstDirect: 1;
+        unsigned int dstDirectRegister: 1;
+        unsigned int dstIndirectRegister: 1;
+        unsigned int srcImmediate: 1;
+        unsigned int srcDirect: 1;
+        unsigned int srcDirectRegister: 1;
+        unsigned int srcIndirectRegister: 1;
+        unsigned int opcode: 4;
+        unsigned int unused: 1;
+    };
+};
 
-int codeCommandGroup1(char* cmd, struct operand op1, struct operand op2){
-	int command_word = 0;
-	int command_word_part1; /* opcode*/
-	int command_word_part2; /* source addressing method */
-	int command_word_part3; /* dest addressing method */
-	int command_word_part4; /* A,R,E fields */
-	int second_word = 0;
-	int third_word = 0;
-	if(strcmp(cmd,"mov")==0){
-		command_word_part1 = 0;
-	}
-	if(strcmp(cmd,"add")==0){
-		command_word_part1 = 0;
-		command_word_part1 = add;
-		command_word_part1 = command_word_part1 << 12;
-	}
-	if(strcmp(cmd,"sub")==0){
-		command_word_part1 = 0;
-		command_word_part1 = sub;
-		command_word_part1 = command_word_part1 << 12;
-	}
-	if(op1.addressingType == Immediate_Addressing){
-		command_word_part2 = 1;
-		command_word_part2 = command_word_part2 << 7;
+/* this word can be either at 2nd position or 3rd position
+ * and includes register references
+ * there can be either one register or two registers involved
+ */
+union RegisterWord {
+    unsigned short int value;
+    struct {
+        unsigned int external: 1;
+        unsigned int relocatable: 1;
+        unsigned int absolute: 1;
+        unsigned int dstRegister: 3;
+        unsigned int srcRegister: 3;
+        unsigned int unused: 6;
+    };
+};
 
-	}
-	if(op1.addressingType == Direct_Addressing){
-		command_word_part2 = 1;
-		command_word_part2 = command_word_part2 << 8;
-	}
-	if(op1.addressingType == Indirect_Register_Addressing){
-		command_word_part2 = 1;
-		command_word_part2 = command_word_part2 << 9;
-	}
-	if(op1.addressingType == Direct_Register_Addressing){
-		command_word_part2 = 1;
-		command_word_part2 = command_word_part2 << 10;
-	}
-	/* op2 addressing type can't be immediate addressing */
-	if(op2.addressingType == Direct_Addressing){
-		command_word_part3 = 1;
-		command_word_part3 = command_word_part3 << 4;
-	}
-	if(op1.addressingType == Indirect_Register_Addressing){
-		command_word_part3 = 1;
-		command_word_part3 = command_word_part3 << 5;
-	}
-	if(op1.addressingType == Direct_Register_Addressing){
-		command_word_part3 = 1;
-		command_word_part3 = command_word_part3 << 6;
-	}
-	command_word_part4 = 1;
-	command_word_part4 = command_word_part4 << 2;
-	/* A bit is 1, R and E bits are 0 for the first word in command */
-	command_word = command_word_part1 + command_word_part2 + command_word_part3 + command_word_part4;
-	/* command_word now has the binary code for the first word in command line */
-    if ((op1.addressingType == Direct_Register_Addressing || op1.addressingType == Indirect_Register_Addressing)
-        && (op2.addressingType == Direct_Register_Addressing || op2.addressingType == Indirect_Register_Addressing)) {
+union ReferenceWord {
+    unsigned short int value;
+    struct {
+        unsigned int external: 1;
+        unsigned int relocatable: 1;
+        unsigned int absolute: 1;
+        unsigned int address: 12;
+    };
+};
+
+union ImmediateWord {
+    unsigned short int value;
+    struct {
+        unsigned int external: 1;
+        unsigned int relocatable: 1;
+        unsigned int absolute: 1;
+        unsigned int address: 12;
+    };
+};
+
+int codeCommandGroup1(struct commandInfo *cmdInfo, struct operand op1, struct operand op2) {
+    unsigned short int words[3]; // create an array of max number of command words
+    int numWords = 1;
+    memset(words, 0, sizeof(words));
+
+    union OpCodeWord *commandWord = (union OpCodeWord *) &words[0];
+    commandWord->opcode = cmdInfo->commandNumber;
+    commandWord->absolute = 1;
+
+    commandWord->srcImmediate = op1.addressingType == Immediate_Addressing;
+    commandWord->srcDirect = op1.addressingType == Direct_Addressing;
+    commandWord->srcIndirectRegister = op1.addressingType == Indirect_Register_Addressing;
+    commandWord->srcDirectRegister = op1.addressingType == Direct_Register_Addressing;
+
+    commandWord->dstImmediate = op2.addressingType == Immediate_Addressing;
+    commandWord->dstDirect = op2.addressingType == Direct_Addressing;
+    commandWord->dstIndirectRegister = op2.addressingType == Indirect_Register_Addressing;
+    commandWord->dstDirectRegister = op2.addressingType == Direct_Register_Addressing;
+
+    /* command_word now has the binary code for the first word in command line */
+    if ((op1.addressingType == Direct_Register_Addressing ||
+         op1.addressingType == Indirect_Register_Addressing)
+        && (op2.addressingType == Direct_Register_Addressing ||
+            op2.addressingType == Indirect_Register_Addressing)) {
+        ++numWords;
+
+        union RegisterWord*registerWord = (union RegisterWord*)&words[1];
+        registerWord->absolute = 1;
+
+
         /* we only need one extra word in machine code for both operands */
-    	/* bits 3 - 5 get dest register */
-    	/* bits 6 - 8 get src register */
-    	/* bits 0 - 2 get A,R,E fields */
-    	/* bits 9 - 14 get zero */
+        /* bits 3 - 5 get dest register */
+        /* bits 6 - 8 get src register */
+        /* bits 0 - 2 get A,R,E fields */
+        /* bits 9 - 14 get zero */
     }
-	/* if we get here it means we need two more words */
+    /* if we get here it means we need two more words */
 
 
 
-	int bit_count = 0;
-	return 1;
+    int bit_count = 0;
+    return 1;
 }
 
 int codeNumber(struct assemblerContext *context, int number, int count) {
@@ -105,7 +131,6 @@ int codeString(struct assemblerContext *context, char *str) {
     /* copy the null termination */
     return codeNumber(context, p - str + 1, 0);
 }
-
 
 
 int processDotEntry(struct assemblerContext *context, char *directive, char *args, int pass) {
@@ -382,7 +407,7 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
             return 3;
         }
     }
-    codeCommandGroup1(cmd,op1,op2);
+    codeCommandGroup1(cmdInfo, op1, op2);
     /* successful parse and second parse - we code here */
     /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
     return 1;
@@ -649,22 +674,22 @@ processGroup7Command(struct assemblerContext *context, struct commandInfo *cmdIn
 }
 
 struct commandInfo commands[] = { /**/
-        {"mov",  processGroup1Command}, /**/
-        {"add",  processGroup1Command}, /**/
-        {"sub",  processGroup1Command}, /**/
-        {"cmp",  processGroup2Command}, /**/
-        {"lea",  processGroup3Command}, /**/
-        {"clr",  processGroup4Command}, /**/
-        {"not",  processGroup4Command}, /**/
-        {"inc",  processGroup4Command}, /**/
-        {"dec",  processGroup4Command}, /**/
-        {"red",  processGroup4Command}, /**/
-        {"jmp",  processGroup5Command}, /**/
-        {"jsr",  processGroup5Command}, /**/
-        {"bne",  processGroup5Command}, /**/
-        {"prn",  processGroup6Command}, /**/
-        {"rts",  processGroup7Command}, /**/
-        {"stop", processGroup7Command}, /**/
+        {"mov",  mov,  processGroup1Command}, /**/
+        {"add",  add,  processGroup1Command}, /**/
+        {"sub",  sub,  processGroup1Command}, /**/
+        {"cmp",  cmp,  processGroup2Command}, /**/
+        {"lea",  lea,  processGroup3Command}, /**/
+        {"clr",  clr,  processGroup4Command}, /**/
+        {"not",  not,  processGroup4Command}, /**/
+        {"inc",  inc,  processGroup4Command}, /**/
+        {"dec",  dec,  processGroup4Command}, /**/
+        {"red",  red,  processGroup4Command}, /**/
+        {"jmp",  jmp,  processGroup5Command}, /**/
+        {"jsr",  jsr,  processGroup5Command}, /**/
+        {"bne",  bne,  processGroup5Command}, /**/
+        {"prn",  prn,  processGroup6Command}, /**/
+        {"rts",  rts,  processGroup7Command}, /**/
+        {"stop", stop, processGroup7Command}, /**/
         {NULL, NULL} /**/
 };
 
