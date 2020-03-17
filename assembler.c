@@ -76,6 +76,9 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
     /* this function gets a command line and creates the binary words corresponding to that command*/
     /* uses         to put the converted machine code in output file */
     unsigned short int words[3]; /* create an array of max number of command words */
+
+
+    /*TODO consider validating logic symbol usage. e.g. jump to data label*/
     FILE* output = fopenFileWithExt(context->fileName,"w","ob");
     union OpCodeWord *commandWord;
     union RegisterWord *registerWord1;
@@ -301,7 +304,7 @@ int processDotEntry(struct assemblerContext *context, char *directive, char *arg
         	/* if we don't find the symbol it means it isn't in this file because this is second pass */
             fprintf(stderr, "%s:%d: ERROR: .entry symbol isnt defined. \n",context->fileName,context->lineNumber);
             free(label);
-            return LABEL_ALREADY_EXISTS;
+            return LABEL_DOES_NOT_EXIST;
         }
         modify_symbol(&context->table,symbol->label,symbol->address,Entry,symbol->location);
         count++;
@@ -943,9 +946,6 @@ int processLine(struct assemblerContext *context, char *line) {
                 }
                 /*successful parse - one word for each operand and one word for .data*/
                 /* update dataCount*/
-                if (context->pass == FIRST_PASS) {
-                    context->dataCount += words;
-                }
                 return 0;
             }
             /* we can ignore label defined in .extern line if firstpass */
