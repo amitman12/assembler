@@ -61,22 +61,22 @@ union ImmediateWord {
     } info;
 };
 
-int outDirective(struct assemblerContext *context, char *label) {
-    /* this function takes care of .string .data .entry and .external lines */
-    /* as in puts labels in output file according to instructions */
-    /* also copies all.string and .data definitions from data image to output file */
-    return -1;
+void outDirective(struct assemblerContext *context) {
+	/* this function creates fileName.ext, fileName.ent and copies from symboltable in context to those files */
+    /* this function then copies data image to fileName.ob (.string and .data) in context->memory */
+    /* this function is only called after second pass has finished */
+
 }
 
 
 int
 codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struct operand *op1, struct operand *op2) {
-	/* returns -1 if couldnt create/open output file*/
+	/* returns -1 if couldn't create/open output file*/
 	/* returns 0 on successful write to output file */
     /* this function gets a command line and creates the binary words corresponding to that command*/
     /* uses         to put the converted machine code in output file */
     unsigned short int words[3]; /* create an array of max number of command words */
-    FILE* output = fopenFileWithExt(context->outputFileName,"w","ob");
+    FILE* output = fopenFileWithExt(context->fileName,"w","ob");
     union OpCodeWord *commandWord;
     union RegisterWord *registerWord1;
     union RegisterWord *registerWord2;
@@ -100,6 +100,12 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
     if (op1 == NULL) {
         /*commands stop,rts*/
         /* these commands only have one word which is the command word */
+    	if(strcmp(cmdInfo->command,"stop")==0){
+    		commandWord->info.opcode = stop;
+    	}
+    	else{
+    		commandWord->info.opcode = rts;
+    	}
     } else {
         /* we have at least one operand */
         commandWord->info.srcImmediate = (op1->addressingType == Immediate_Addressing);
@@ -217,10 +223,12 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
     }
     if(numWords==1){
     	fprintf(output, "%05\n",twosComplement(words[0]));
+    	return 0;
     }
     else if(numWords==2){
     	fprintf(output, "%05\n",twosComplement(words[0]));
     	fprintf(output, "%05\n",twosComplement(words[1]));
+    	return 0;
     }
     /* numWords==3 */
 	fprintf(output, "%05\n",twosComplement(words[0]));
@@ -258,20 +266,67 @@ int codeString(struct assemblerContext *context, char *str) {
 }
 
 
-int processDotEntry(struct assemblerContext *context, char *directive, char *args, int pass) {
-    return 1;
-}
+int processDotEntry(struct assemblerContext *context, char *directive, char *args) {
+    /* args points to first argument */
+    /* returns errors or number of machine code words needed*/
+    /* adds extern labels to symboltable */
+	/* we only call this function in second pass */
+	/* modifies symbols to have .entry value */
+    char *label = (char *) calloc(MAX_LABEL, sizeof(char));
+    int count = 0;
+    struct symbol* symbol;
+
+    while (*args != '\0') {
+        args = readSymbol(args, label);
+        if (args == NULL) {
+            fprintf(stderr, "%s:%d: ERROR: invalid argument for .extern \n", context->fileName, context->lineNumber);
+            free(label);
+            return ILLEGAL_LABEL;
+        }
+        if (is_reserved_word(label) == 1) {
+            fprintf(stderr, "%s:%d: ERROR: argument for .extern can't be a reserved word \n", context->fileName,
+                    context->lineNumber);
+            free(label);
+            return ILLEGAL_LABEL;
+        }
+        if (is_legal(label) == -1) {
+            fprintf(stderr, "%s:%d: ERROR: illegal label argument for .extern \n", context->fileName,
+                    context->lineNumber);
+            free(label);
+            return ILLEGAL_LABEL;
+        }
+        symbol = find_symbol(&context->table,label);
+        if(symbol==NULL){
+        	/* .entry labels have to be defined in this file. */
+        	/* if we don't find the symbol it means it isn't in this file because this is second pass */
+            fprintf(stderr, "%s:%d: ERROR: .entry symbol isnt defined. \n",context->fileName,context->lineNumber);
+            free(label);
+            return LABEL_ALREADY_EXISTS;
+        }
+        modify_symbol(&context->table,symbol->label,symbol->address,Entry,symbol->location);
+        count++;
+        if (*args == ',') {
+            ++args;
+            args = skipWhiteSpaces(args);
+        }
+    }
+    if (count == 0) {
+        fprintf(stderr, "%s:%d: ERROR: no arguments for .extern line \n", context->fileName, context->lineNumber);
+        free(label);
+        return LABEL_EMPTY;
+    }
+    /* return number of extern labels in this line */
+    free(label);
+    return count;}
 
 
-int processDotExtern(struct assemblerContext *context, char *directive, char *args, int pass) {
+int processDotExtern(struct assemblerContext *context, char *directive, char *args) {
     /* args points to first argument */
     /* returns errors or number of machine code words needed*/
     /* adds extern labels to symboltable */
     char *label = (char *) calloc(MAX_LABEL, sizeof(char));
     int count = 0;
-    if (pass == SECOND_PASS) {
-        /* code directive and put it where it should be */
-    }
+
     while (*args != '\0') {
         args = readSymbol(args, label);
         if (args == NULL) {
@@ -297,14 +352,10 @@ int processDotExtern(struct assemblerContext *context, char *directive, char *ar
             return LABEL_ALREADY_EXISTS;
         }*/
         /* we don't check if a label given as argument in .extern line already exists in symboltable*/
-        if (pass == FIRST_PASS) {
+        if (context->pass == FIRST_PASS) {
             add_symbol(&context->table, create_symbol(&context->table, label, UNKNOWN_ADDRESS, External,
                                                       Unknown_Location));
-        } else {
-            /* second pass*/
-            /* code label and put it where it's supposed to be */
         }
-
         count++;
         if (*args == ',') {
             ++args;
@@ -321,7 +372,7 @@ int processDotExtern(struct assemblerContext *context, char *directive, char *ar
     return count;
 }
 
-int processDotData(struct assemblerContext *context, char *args, int pass) {
+int processDotData(struct assemblerContext *context, char *args) {
     /* args points to first argument */
     /* returns errors or number of words needed in machine code for this .string line  on success */
     int count = 0;
@@ -348,7 +399,7 @@ int processDotData(struct assemblerContext *context, char *args, int pass) {
         }
         count++;
         /* immediate is in *temp */
-        if (pass == FIRST_PASS) {
+        if (context->pass == FIRST_PASS) {
             codeNumber(context, *temp, count);
         }
         if (*args == ',') {
@@ -361,7 +412,7 @@ int processDotData(struct assemblerContext *context, char *args, int pass) {
     return count;
 }
 
-int processDotString(struct assemblerContext *context, char *args, int pass) {
+int processDotString(struct assemblerContext *context, char *args) {
     /* args points to first argument */
     /* returns errors or number of words needed in machine code for this .string line  on success */
     char str[MAX_CMD];
@@ -379,7 +430,7 @@ int processDotString(struct assemblerContext *context, char *args, int pass) {
 
     }
     /* string is in str*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         codeString(context, str);
     }
     /* we need one word of machine code per char in the string(including \0) plus one for the command */
@@ -480,7 +531,7 @@ char *readCommandOperand(struct assemblerContext *context, char *p, struct opera
 /*group 7 commands: rts, stop*/
 
 int
-processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /*commands of group 1 - mov,add,sub */
     /* args points to first char of first argument in line */
     char *p;
@@ -493,13 +544,13 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op1, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+                cmdInfo->command);
         return -1;
     }
     nextToken = skipWhiteSpaces(nextToken);
     if (*nextToken != ',') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     nextToken++;
@@ -508,24 +559,24 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, nextToken, &op2, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     p = skipWhiteSpaces(nextToken);
     if (*p != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     /* both operands were parsed successfully*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         if ((op1.addressingType == 2 || op1.addressingType == 3)
             && (op2.addressingType == 2 || op2.addressingType == 3)) {
             /* we only need one extra word in machine code for both operands */
             return 2;
         } else if (op2.addressingType == 0) {
             fprintf(stderr, "%s:%d: ERROR: dest operand addressing of command %s cannot be immediate addressing\n",
-                    context->fileName, context->lineNumber, cmd);
+                    context->fileName, context->lineNumber, cmdInfo->command);
             return ADDRESSING_ERROR;
         } else {
             /* we need one word in machine code per operand and one for the command */
@@ -541,7 +592,7 @@ processGroup1Command(struct assemblerContext *context, struct commandInfo *cmdIn
 }
 
 int
-processGroup2Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup2Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /* command of group 2 - cmp */
     char *p;
     char *nextToken;
@@ -553,13 +604,13 @@ processGroup2Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op1, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     nextToken = skipWhiteSpaces(nextToken);
     if (*nextToken != ',') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     ++nextToken;
@@ -568,17 +619,17 @@ processGroup2Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, nextToken, &op2, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     nextToken = skipWhiteSpaces(nextToken);
     if (*nextToken != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires exactly two operands\n", context->fileName,
-                context->lineNumber, cmd);
+                context->lineNumber, cmdInfo->command);
         return -1;
     }
     /* both operands were parsed successfully*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         if ((op1.addressingType == 2 || op1.addressingType == 3)
             && (op2.addressingType == 2 || op2.addressingType == 3)) {
             /* we only need one extra word in machine code for both operands */
@@ -590,14 +641,15 @@ processGroup2Command(struct assemblerContext *context, struct commandInfo *cmdIn
         }
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, &op1, &op2);
     /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
+    /* command is in cmdInfo->command. operand 1 is in op1 and operand 2 is in op2 */
     return 1;
 
 }
 
 int
-processGroup3Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup3Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /*commands of group 3 - lea */
     /* args points to first char of first argument in line */
     char *p;
@@ -610,13 +662,13 @@ processGroup3Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op1, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     nextToken = skipWhiteSpaces(nextToken);
     if (*nextToken != ',') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     ++nextToken;
@@ -626,25 +678,25 @@ processGroup3Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, nextToken, &op2, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     nextToken = skipWhiteSpaces(nextToken);
     if (*nextToken != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires two operands\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return -1;
     }
     /* both operands were parsed successfully*/
-    if (pass == 1) {
+    if (context->pass == FIRST_PASS) {
         if (op1.addressingType != 1) {
             fprintf(stderr, "%s:%d: ERROR: source addressing type of command %s has to be Direct Addressing\n",
-                    context->fileName, context->lineNumber, cmd);
+                    context->fileName, context->lineNumber, cmdInfo->command);
             return ADDRESSING_ERROR;
         } else {
             if (op2.addressingType == 0) {
                 fprintf(stderr, "%s:%d: ERROR: target addressing type of command %s cannot be Immediate Addressing\n",
-                        context->fileName, context->lineNumber, cmd);
+                        context->fileName, context->lineNumber, cmdInfo->command);
                 return ADDRESSING_ERROR;
             }
             /* we need one word in machine code per operand and one for the command */
@@ -652,13 +704,14 @@ processGroup3Command(struct assemblerContext *context, struct commandInfo *cmdIn
         }
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, &op1, &op2);
     /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
+    /* command is in cmdInfo->command. operand 1 is in op1 and operand 2 is in op2 */
     return 1;
 }
 
 int
-processGroup4Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup4Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /* group 4 commands - clr, not, inc, dec, red */
     /* these commands only take 1 operand */
     char *p;
@@ -670,21 +723,21 @@ processGroup4Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s requires exactly one operand\n", context->fileName,
-                context->lineNumber, cmd);
+                context->lineNumber, cmdInfo->command);
         return SYNTAX_ERROR;
     }
     p = skipWhiteSpaces(nextToken);
     if (*p != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s requires exactly one operand\n", context->fileName,
-                context->lineNumber, cmd);
+                context->lineNumber, cmdInfo->command);
         return SYNTAX_ERROR;
     }
 
     /* operand was parsed successfully*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         if (op.addressingType == 0) {
             fprintf(stderr, "%s:%d: ERROR: dest addressing type of command %s cannot be Immediate Addressing\n",
-                    context->fileName, context->lineNumber, cmd);
+                    context->fileName, context->lineNumber, cmdInfo->command);
             return ADDRESSING_ERROR;
         } else {
             /* we need one word in machine code per operand and one for the command */
@@ -693,13 +746,14 @@ processGroup4Command(struct assemblerContext *context, struct commandInfo *cmdIn
         }
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, &op, NULL);
     /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
+    /* command is in cmdInfo->command. operand 1 is in op and operand 2 is NULL */
     return 1;
 }
 
 int
-processGroup5Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup5Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /* group 5 commands - jmp, jsr, bne*/
     /* these commands only take 1 operand */
     char *p;
@@ -711,18 +765,18 @@ processGroup5Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR:command %s requires exactly one operand\n", context->fileName,
-                context->lineNumber, cmd);
+                context->lineNumber, cmdInfo->command);
         return SYNTAX_ERROR;
     }
     p = skipWhiteSpaces(nextToken);
     if (*p != '\0') {
         fprintf(stderr, "%s:%d: ERROR:command %s requires exactly one operand\n", context->fileName,
-                context->lineNumber, cmd);
+                context->lineNumber, cmdInfo->command);
         return SYNTAX_ERROR;
     }
 
     /* operand was parsed successfully*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         if (op.addressingType == 0 || op.addressingType == 3) {
             fprintf(stderr,
                     "%s:%d: ERROR: dest addressing type cannot be Immediate Addressing or Direct Register Addressing\n",
@@ -735,13 +789,14 @@ processGroup5Command(struct assemblerContext *context, struct commandInfo *cmdIn
         }
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, &op, NULL);
     /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1*/
+    /* command is in cmdInfo->command. operand 1 is in op and op2 is NULL*/
     return 1;
 }
 
 int
-processGroup6Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup6Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     /* group 6 commands - prn*/
     /* this command only takes 1 operand */
     char *p;
@@ -753,13 +808,13 @@ processGroup6Command(struct assemblerContext *context, struct commandInfo *cmdIn
     nextToken = readCommandOperand(context, p, &op, 1);
     if (nextToken == NULL) {
         fprintf(stderr, "%s:%d: ERROR: command %s takes exactly 1 operand\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return SYNTAX_ERROR;
     }
     p = skipWhiteSpaces(nextToken);
     if (*p != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s takes exactly 1 operand\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return SYNTAX_ERROR;
     }
 
@@ -767,35 +822,35 @@ processGroup6Command(struct assemblerContext *context, struct commandInfo *cmdIn
     /* every addressing method is legal for prn */
     /* we need one word in machine code per operand and one for the command */
     /* one operand , one word*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         return 2;
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, &op, NULL);
     /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1*/
+    /* command is in cmdInfo->command. operand 1 is in op1*/
     return 1;
 }
 
 int
-processGroup7Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *cmd, char *args, int pass) {
+processGroup7Command(struct assemblerContext *context, struct commandInfo *cmdInfo, char *args) {
     char *p;
     p = skipWhiteSpaces(args);
     if (*p != '\0') {
         fprintf(stderr, "%s:%d: ERROR: command %s does not accept arguments\n", context->fileName, context->lineNumber,
-                cmd);
+        		cmdInfo->command);
         return SYNTAX_ERROR;
     }
     /* one word in machine code needed*/
-    if (pass == FIRST_PASS) {
+    if (context->pass == FIRST_PASS) {
         return 1;
     }
     /* if we get here we're in 2nd pass */
+    codeCommand(context, cmdInfo, NULL, NULL);
     /* successful parse and second parse - we code here */    /* if we get here we're in 2nd pass */
-    /* successful parse and second parse - we code here */
-    /* command is in cmd. operand 1 is in op1*/
+    /* command is in cmdInfo->command. operands are both NULL*/
     return 1;
-    /* command is in cmd. operand 1 is in op1*/
-    return 1;
+    /* command is in cmdInfo->command. operand 1 is in op1*/
 }
 
 struct commandInfo commands[] = { /**/
@@ -818,7 +873,7 @@ struct commandInfo commands[] = { /**/
         {NULL, NULL} /**/
 };
 
-int processLine(struct assemblerContext *context, char *line, int pass) {
+int processLine(struct assemblerContext *context, char *line) {
     /* returns number of machine code words needed for this line on successful parse */
     /* returns negatives on errors */
     /* pass = 1 on firstpass. pass = 2 on secondpass */
@@ -874,8 +929,24 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
         /* this is an instruction line*/
         /* add label to symboltable if flag is 1 and not extern/entry */
         if (strncmp(p, ".entry", DOT_ENTRY) == 0) {
-            if (pass == 2) {
-
+            if (context->pass == SECOND_PASS) {
+                p += DOT_ENTRY;
+                if (p == skipWhiteSpaces(p)) {
+                    fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
+                    return SYNTAX_ERROR;
+                }
+                nextToken = skipWhiteSpaces(nextToken);
+                words = processDotEntry(context, ".extern", nextToken);
+                if (words < 0) {
+                    /* processDotData failed and printed errors*/
+                    return words;
+                }
+                /*successful parse - one word for each operand and one word for .data*/
+                /* update dataCount*/
+                if (context->pass == FIRST_PASS) {
+                    context->dataCount += words;
+                }
+                return 0;
             }
             /* we can ignore label defined in .extern line if firstpass */
             /* .entry lines arent processed in firstpass */
@@ -887,16 +958,13 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
                 return SYNTAX_ERROR;
             }
             nextToken = skipWhiteSpaces(nextToken);
-            words = processDotExtern(context, ".extern", nextToken, pass);
+            words = processDotExtern(context, ".extern", nextToken);
             if (words < 0) {
                 /* processDotData failed and printed errors*/
                 return words;
             }
             /*successful parse - one word for each operand and one word for .data*/
-            /* update dataCount*/
-            if (pass == 1) {
-                context->dataCount += words;
-            }
+            /* we don't update dataCount on .extern*/
             return 0;
 
         } else if (strncmp(p, ".data", DOT_DATA) == 0) {
@@ -907,12 +975,12 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
                 fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
                 return SYNTAX_ERROR;
             }
-            words = processDotData(context, nextToken, pass);
+            words = processDotData(context, nextToken);
             if (words < 0) {
                 /* errors were printed in processDotData */
                 return SYNTAX_ERROR;
             }
-            if (pass == 1) {
+            if (context->pass == FIRST_PASS) {
                 if (labelFlag == 1) {
                     /*add newly defined symbol to symboltable*/
                     add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
@@ -932,12 +1000,12 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
                 fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
                 return SYNTAX_ERROR;
             }
-            words = processDotString(context, nextToken, pass);
+            words = processDotString(context, nextToken);
             if (words < 0) {
                 /* errors were printed in processDotString */
                 return SYNTAX_ERROR;
             }
-            if (pass == 1) {
+            if (context->pass == FIRST_PASS) {
                 if (labelFlag == 1) {
                     /*add newly defined symbol to symboltable*/
                     add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
@@ -955,7 +1023,7 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
         }
     } else {
         /*we expect a command here. add symbol if defined in this line*/
-        if (labelFlag == 1 && pass == FIRST_PASS)
+        if (labelFlag == 1 && context->pass == FIRST_PASS)
             add_symbol(&context->table, create_symbol(&context->table, label, context->instructionCount + 100, Regular,
                                                       Code));
 
@@ -971,7 +1039,7 @@ int processLine(struct assemblerContext *context, char *line, int pass) {
             return COMMAND_DOESNT_EXIST;
         }
         nextToken = skipWhiteSpaces(nextToken);
-        result = cmdInfo->processCommand(context, cmdInfo, cmd, nextToken, pass);
+        result = cmdInfo->processCommand(context, cmdInfo, cmd, nextToken);
 
         if (result < 0) {
             return result;

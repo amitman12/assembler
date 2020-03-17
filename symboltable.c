@@ -39,7 +39,7 @@ void add_symbol(struct symboltable* table, struct symbol * node) {
 }
 
 /* modifies a symbol whose label is in *(str). if address/locatipn/type arent known yet, no modifications happen */
-void modify_symbol(struct symboltable* table, char* str, int address, int location, int type) {
+void modify_symbol(struct symboltable* table, char* str, int address,  int type,int location) {
 	struct symbol* temp = table->head;
 	while (temp != NULL) {
 		if (strcmp(str, temp->label)) {

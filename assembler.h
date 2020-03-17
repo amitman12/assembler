@@ -11,8 +11,8 @@
 #include "symboltable.h"
 
 struct assemblerContext {
+	int pass;
     char* fileName;
-    char* outputFileName;
     struct symboltable table;
     int lineNumber;
     int errorCount;
@@ -25,7 +25,7 @@ struct assemblerContext {
 struct commandInfo {
     char* command;
     int commandNumber;
-    int (*processCommand)(struct assemblerContext* context, struct commandInfo*, char* cmd, char* args, int pass);
+    int (*processCommand)(struct assemblerContext* context, struct commandInfo*, char* cmd, char* args);
 };
 
 extern struct commandInfo commands[];
@@ -47,19 +47,19 @@ struct assemblerContext* createAssemblerContext(char* fileName);
 void deallocateAssemblerContext(struct assemblerContext* p);
 
 
-int processDotString(struct assemblerContext* context, char* args, int pass);
-int processDotData(struct assemblerContext* context, char* args, int pass);
-int processDotExtern(struct assemblerContext* context, char* directive,char* args, int pass);
-int processDotEntry(struct assemblerContext* context,char* directive, char* args, int pass);
+int processDotString(struct assemblerContext* context, char* args);
+int processDotData(struct assemblerContext* context, char* args);
+int processDotExtern(struct assemblerContext* context, char* directive,char* args);
+int processDotEntry(struct assemblerContext* context,char* directive, char* args);
 
-int processAssignCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processCmpCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processLeaCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processACommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processBranchCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processPrnCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processNonArgsCommand(struct assemblerContext* context, struct commandInfo* cmdInfo, char* cmd, char* args, int pass);
-int processLine(struct assemblerContext* context, char* line, int pass);
+int processGroup1Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup2Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup3Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup4Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup5Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup6Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processGroup7Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
+int processLine(struct assemblerContext* context, char* line);
 
 int assembler(char* fileName);
 

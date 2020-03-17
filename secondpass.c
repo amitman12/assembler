@@ -30,7 +30,7 @@ int secondPass(struct assemblerContext *context) {
         fprintf(stderr, "could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
         return -1;
     }
-
+    context->pass = SECOND_PASS;
     line = (char *) malloc(MAX_CMD);
     if (line == NULL) {
         fprintf(stderr, "could not allocate memory error: %s\n", strerror(errno));
@@ -43,7 +43,7 @@ int secondPass(struct assemblerContext *context) {
     while (fgets(line, MAX_CMD, inputFile)) {
         chomp(line);
         ++context->lineNumber;
-        if ((result = processLine(context, line, SECOND_PASS)) < 0) {
+        if ((result = processLine(context, line)) < 0) {
             ++context->errorCount;
         }
     }

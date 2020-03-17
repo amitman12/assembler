@@ -31,7 +31,7 @@ struct symbol* find_symbol(struct symboltable* table, char* p);
 void add_symbol(struct symboltable* table, struct symbol * node);
 
 /* looks for a symbol according to *str, and modifies its address, type and location */
-void modify_symbol(struct symboltable* table, char* str, int address, int location, int type);
+void modify_symbol(struct symboltable* table, char* str, int address,  int type,int location);
 
 /* frees memory held up by symboltable */
 void dealloc_symbol_table(struct symboltable* table);
