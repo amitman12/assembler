@@ -42,6 +42,7 @@ struct operand {
 };
 
 
+int outDirective(struct assemblerContext* context);
 
 struct assemblerContext* createAssemblerContext(char* fileName);
 void deallocateAssemblerContext(struct assemblerContext* p);

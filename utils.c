@@ -10,6 +10,7 @@
 #include "symboltable.h"
 
 FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
+	/* open file with given extension */
     char fileNameWithExt [FILENAME_MAX];
     sprintf(fileNameWithExt, "%s.%s", fileName, ext);
     return fopen(fileNameWithExt, mode);

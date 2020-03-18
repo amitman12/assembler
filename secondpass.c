@@ -25,8 +25,9 @@ int secondPass(struct assemblerContext *context) {
     /* returns 0 on success, otherwise returns number of errors */
     int result;
     char *line;
-    FILE *inputFile = fopen(context->fileName, "r");
-    if (inputFile == NULL) {
+    FILE *inputFile = fopenFileWithExt(context->fileName,"r","as");
+    FILE* output = fopenFileWithExt(context->fileName,"w","ob");
+    if (inputFile == NULL||output==NULL) {
         fprintf(stderr, "could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
         return -1;
     }
@@ -37,8 +38,9 @@ int secondPass(struct assemblerContext *context) {
         free(line);
         return -1;
     }
-
-    /*TODO create objFile name with the relevant extension. then open it*/
+    /* write title into output file */
+	fprintf(output, "%d %d\n",context->instructionCount,context->dataCount);
+	context->instructionCount = 0;
 
     while (fgets(line, MAX_CMD, inputFile)) {
         chomp(line);
@@ -50,6 +52,7 @@ int secondPass(struct assemblerContext *context) {
     if (context->errorCount == 0) {
         free(line);
         /* still need to create output files here */
+        outDirective(context);
         fclose(inputFile);
         return 0;
     }

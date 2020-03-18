@@ -45,5 +45,9 @@ void update_data_symbol(struct symboltable* table, int);
 
 int checkLabel(struct symboltable* table, char* label);
 
+int outEntries(struct symboltable table, char* output);
+int outExterns(struct symboltable table, char* output);
+
+
 
 #endif /* SYMBOLTABLE_H_ */

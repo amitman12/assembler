@@ -61,12 +61,41 @@ union ImmediateWord {
     } info;
 };
 
-void outDirective(struct assemblerContext *context) {
+void outMemory(struct assemblerContext *context){
+	/* this function copies data image to output file. */
+	/* this function is called after second pass if over. */
+	int dataWord=0;
+	while(dataWord<context->dataCount){
+		fprintf(out, "%d %05\n",twosComplement(words[2]),context->instructionCount);
+		dataWord++;
+	}
+}
+
+int outDirective(struct assemblerContext *context) {
 	/* this function creates fileName.ext, fileName.ent and copies from symboltable in context to those files */
     /* this function then copies data image to fileName.ob (.string and .data) in context->memory */
     /* this function is only called after second pass has finished */
-
+	/* returns -1 on error. 0 on success */
+	int result;
+	result = outExterns(context->table, context->fileName);
+	if(result==-1){
+		fprintf(stderr,
+				"ERROR: could not create/open output .ext file.\n");
+		return -1;
+	}
+	result = outEntries(context->table, context->fileName);
+	if(result==-1){
+		fprintf(stderr,
+				"ERROR: could not create/open output .ent file.\n");
+		return -1;
+	}
+	outMemory(context);
+	return 0;
 }
+
+
+
+
 
 
 int
@@ -225,18 +254,18 @@ codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo, struc
         }
     }
     if(numWords==1){
-    	fprintf(output, "%05\n",twosComplement(words[0]));
+    	fprintf(output, "%d %05\n",twosComplement(words[0]),context->instructionCount);
     	return 0;
     }
     else if(numWords==2){
-    	fprintf(output, "%05\n",twosComplement(words[0]));
-    	fprintf(output, "%05\n",twosComplement(words[1]));
+    	fprintf(output, "%d %05\n",twosComplement(words[1]),context->instructionCount);
+    	fprintf(output, "%d %05\n",twosComplement(words[1]),context->instructionCount);
     	return 0;
     }
     /* numWords==3 */
-	fprintf(output, "%05\n",twosComplement(words[0]));
-	fprintf(output, "%05\n",twosComplement(words[1]));
-	fprintf(output, "%05\n",twosComplement(words[2]));
+	fprintf(output, "%d %05\n",twosComplement(words[2]),context->instructionCount);
+	fprintf(output, "%d %05\n",twosComplement(words[2]),context->instructionCount);
+	fprintf(output, "%d %05\n",twosComplement(words[2]),context->instructionCount);
     return 0;
 }
 
@@ -876,11 +905,155 @@ struct commandInfo commands[] = { /**/
         {NULL, NULL} /**/
 };
 
+
+
+
+
+
+
+
+int processDirectiveLine(struct assemblerContext *context, char *p, char* nextToken,char*label,int labelFlag){
+	/* processes a directive/instruction line. negatives on errors. returns 0 on success */
+	/* advanced data count when needed, adds labels when needed*/
+    /* this is an instruction line*/
+	int words;
+	words = 0;
+    if (strncmp(p, ".entry", DOT_ENTRY) == 0) {
+        if (context->pass == SECOND_PASS) {
+            p += DOT_ENTRY;
+            if (p == skipWhiteSpaces(p)) {
+                fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
+                return SYNTAX_ERROR;
+            }
+            nextToken = skipWhiteSpaces(nextToken);
+            words = processDotEntry(context, ".extern", nextToken);
+            if (words < 0) {
+                /* processDotData failed and printed errors*/
+                return words;
+            }
+            /*successful parse - one word for each operand and one word for .data*/
+            /* update dataCount*/
+            return 0;
+        }
+        /* we can ignore label defined in .extern line if firstpass */
+        /* .entry lines arent processed in firstpass */
+    } else if (strncmp(p, ".extern", DOT_EXTERN) == 0) {
+        /* we can ignore label defined in .extern line */
+        p += DOT_EXTERN;
+        if (p == skipWhiteSpaces(p)) {
+            fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
+            return SYNTAX_ERROR;
+        }
+        nextToken = skipWhiteSpaces(nextToken);
+        words = processDotExtern(context, ".extern", nextToken);
+        if (words < 0) {
+            /* processDotData failed and printed errors*/
+            return words;
+        }
+        /*successful parse - one word for each operand and one word for .data*/
+        /* we don't update dataCount on .extern*/
+        return 0;
+
+    } else if (strncmp(p, ".data", DOT_DATA) == 0) {
+        /* .data line */
+
+        p += DOT_DATA;
+        if (p == skipWhiteSpaces(p)) {
+            fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
+            return SYNTAX_ERROR;
+        }
+        words = processDotData(context, nextToken);
+        if (words < 0) {
+            /* errors were printed in processDotData */
+            return SYNTAX_ERROR;
+        }
+        if (context->pass == FIRST_PASS) {
+            if (labelFlag == 1) {
+                /*add newly defined symbol to symboltable*/
+                add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
+                                                          Data));
+            }
+            /*successful parse - one word for each operand and one word for .data*/
+            /* update data count*/
+            context->dataCount += words;
+        }
+        return 0;
+
+    } else if (strncmp(p, ".string", DOT_STRING) == 0) {
+        /* .string line */
+
+        p += DOT_STRING;
+        if (p == skipWhiteSpaces(p)) {
+            fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
+            return SYNTAX_ERROR;
+        }
+        words = processDotString(context, nextToken);
+        if (words < 0) {
+            /* errors were printed in processDotString */
+            return SYNTAX_ERROR;
+        }
+        if (context->pass == FIRST_PASS) {
+            if (labelFlag == 1) {
+                /*add newly defined symbol to symboltable*/
+                add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
+                                                          Data));
+            }
+            /*successful parse - one word for each operand and one word for .data*/
+            /*update dataCount*/
+            context->dataCount += words;
+        }
+        return 0;
+
+    } else {
+        fprintf(stderr, "%s:%d: ERROR: no such directive exists\n", context->fileName, context->lineNumber);
+        return SYNTAX_ERROR;
+    }
+    return SYNTAX_ERROR;
+}
+
+
+int processCommandLine(struct assemblerContext *context, char *p, char* nextToken,char*label,int labelFlag){
+	/* processes a command line. negatives on errors. returns the amount of words needed on non error */
+    char cmd[MAX_CMD];
+    int result;
+    struct commandInfo *cmdInfo;
+    /*we expect a command here. add symbol if defined in this line*/
+    if (labelFlag == 1 && context->pass == FIRST_PASS)
+        add_symbol(&context->table, create_symbol(&context->table, label, context->instructionCount + 100, Regular,
+                                                  Code));
+
+    if (nextToken - p == 0 || nextToken - p >= MAX_CMD) {
+        fprintf(stderr, "%s:%d: ERROR: command expected\n", context->fileName, context->lineNumber);
+        return COMMAND_EXPECTED;
+    }
+    strncpyNull(cmd, p, nextToken - p);
+    cmdInfo = findCommand(cmd);
+    if (cmdInfo == NULL) {
+        fprintf(stderr, "%s:%d: ERROR: syntax error: unknown command and whitespace after label are illegal\n",
+                context->fileName, context->lineNumber);
+        return COMMAND_DOESNT_EXIST;
+    }
+    nextToken = skipWhiteSpaces(nextToken);
+    result = cmdInfo->processCommand(context, cmdInfo, cmd, nextToken);
+
+    if (result < 0) {
+        return result;
+    }
+
+    context->instructionCount += result;
+    return result;
+}
+
+
+
+
+
+
+
 int processLine(struct assemblerContext *context, char *line) {
     /* returns number of machine code words needed for this line on successful parse */
     /* returns negatives on errors */
     /* pass = 1 on firstpass. pass = 2 on secondpass */
-    int words;
     char *p = line;
     char *nextToken;
     char label[MAX_LABEL];
@@ -929,126 +1102,15 @@ int processLine(struct assemblerContext *context, char *line) {
     /* now nextToken points to first character in first argument (first operand)*/
     /*now we expect one of the following: .data, .string, .entry, .extern or command */
     if (*p == '.') {
-        /* this is an instruction line*/
-        /* add label to symboltable if flag is 1 and not extern/entry */
-        if (strncmp(p, ".entry", DOT_ENTRY) == 0) {
-            if (context->pass == SECOND_PASS) {
-                p += DOT_ENTRY;
-                if (p == skipWhiteSpaces(p)) {
-                    fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
-                    return SYNTAX_ERROR;
-                }
-                nextToken = skipWhiteSpaces(nextToken);
-                words = processDotEntry(context, ".extern", nextToken);
-                if (words < 0) {
-                    /* processDotData failed and printed errors*/
-                    return words;
-                }
-                /*successful parse - one word for each operand and one word for .data*/
-                /* update dataCount*/
-                return 0;
-            }
-            /* we can ignore label defined in .extern line if firstpass */
-            /* .entry lines arent processed in firstpass */
-        } else if (strncmp(p, ".extern", DOT_EXTERN) == 0) {
-            /* we can ignore label defined in .extern line */
-            p += DOT_EXTERN;
-            if (p == skipWhiteSpaces(p)) {
-                fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
-                return SYNTAX_ERROR;
-            }
-            nextToken = skipWhiteSpaces(nextToken);
-            words = processDotExtern(context, ".extern", nextToken);
-            if (words < 0) {
-                /* processDotData failed and printed errors*/
-                return words;
-            }
-            /*successful parse - one word for each operand and one word for .data*/
-            /* we don't update dataCount on .extern*/
-            return 0;
-
-        } else if (strncmp(p, ".data", DOT_DATA) == 0) {
-            /* .data line */
-
-            p += DOT_DATA;
-            if (p == skipWhiteSpaces(p)) {
-                fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
-                return SYNTAX_ERROR;
-            }
-            words = processDotData(context, nextToken);
-            if (words < 0) {
-                /* errors were printed in processDotData */
-                return SYNTAX_ERROR;
-            }
-            if (context->pass == FIRST_PASS) {
-                if (labelFlag == 1) {
-                    /*add newly defined symbol to symboltable*/
-                    add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
-                                                              Data));
-                }
-                /*successful parse - one word for each operand and one word for .data*/
-                /* update data count*/
-                context->dataCount += words;
-            }
-            return 0;
-
-        } else if (strncmp(p, ".string", DOT_STRING) == 0) {
-            /* .string line */
-
-            p += DOT_STRING;
-            if (p == skipWhiteSpaces(p)) {
-                fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName, context->lineNumber);
-                return SYNTAX_ERROR;
-            }
-            words = processDotString(context, nextToken);
-            if (words < 0) {
-                /* errors were printed in processDotString */
-                return SYNTAX_ERROR;
-            }
-            if (context->pass == FIRST_PASS) {
-                if (labelFlag == 1) {
-                    /*add newly defined symbol to symboltable*/
-                    add_symbol(&context->table, create_symbol(&context->table, label, context->dataCount, Regular,
-                                                              Data));
-                }
-                /*successful parse - one word for each operand and one word for .data*/
-                /*update dataCount*/
-                context->dataCount += words;
-            }
-            return 0;
-
-        } else {
-            fprintf(stderr, "%s:%d: ERROR: no such directive exists\n", context->fileName, context->lineNumber);
-            return SYNTAX_ERROR;
-        }
+    	/* directive line*/
+    	result = processDirectiveLine(context, p, nextToken, label, labelFlag);
     } else {
-        /*we expect a command here. add symbol if defined in this line*/
-        if (labelFlag == 1 && context->pass == FIRST_PASS)
-            add_symbol(&context->table, create_symbol(&context->table, label, context->instructionCount + 100, Regular,
-                                                      Code));
-
-        if (nextToken - p == 0 || nextToken - p >= MAX_CMD) {
-            fprintf(stderr, "%s:%d: ERROR: command expected\n", context->fileName, context->lineNumber);
-            return COMMAND_EXPECTED;
-        }
-        strncpyNull(cmd, p, nextToken - p);
-        cmdInfo = findCommand(cmd);
-        if (cmdInfo == NULL) {
-            fprintf(stderr, "%s:%d: ERROR: syntax error: unknown command and whitespace after label are illegal\n",
-                    context->fileName, context->lineNumber);
-            return COMMAND_DOESNT_EXIST;
-        }
-        nextToken = skipWhiteSpaces(nextToken);
-        result = cmdInfo->processCommand(context, cmdInfo, cmd, nextToken);
-
-        if (result < 0) {
-            return result;
-        }
-
-        context->instructionCount += result;
-
+    	/* command line */
+    	result = processCommandLine(context, p, nextToken, label, labelFlag);
     }
-
+    if (result < 0) {
+        return result;
+    }
     return 0;
 }
 
@@ -1067,6 +1129,8 @@ void deallocateAssemblerContext(struct assemblerContext *p) {
     free(p->fileName);
     dealloc_symbol_table(&p->table);
 }
+
+
 
 int assembler(char *fileName) {
     int result;
