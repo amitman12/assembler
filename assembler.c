@@ -933,8 +933,8 @@ int processDirectiveLine(struct assemblerContext *context, char *p, char* nextTo
             }
             /*successful parse - one word for each operand and one word for .data*/
             /* update dataCount*/
-            return 0;
         }
+        return 0;
         /* we can ignore label defined in .extern line if firstpass */
         /* .entry lines arent processed in firstpass */
     } else if (strncmp(p, ".extern", DOT_EXTERN) == 0) {
@@ -1008,7 +1008,6 @@ int processDirectiveLine(struct assemblerContext *context, char *p, char* nextTo
         fprintf(stderr, "%s:%d: ERROR: no such directive exists\n", context->fileName, context->lineNumber);
         return SYNTAX_ERROR;
     }
-    return SYNTAX_ERROR;
 }
 
 
