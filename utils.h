@@ -26,4 +26,5 @@ char* readToken(char*, char* );
 char* readRegister(char*, int*);
 int isDelimiter(char, char*);
 char* strncpyNull(char* dst, char* src, int count);
+char* duplicateString(char* src);
 #endif /* UTILS_H_ */

@@ -9,7 +9,6 @@
 #include "assembler.h"
 #include "symboltable.h"
 #include "utils.h"
-#include "secondpass.h"
 #include <errno.h>
 #include <ctype.h>
 
@@ -37,11 +36,6 @@ int firstPass(struct assemblerContext* context) {
     }
     if (context->errorCount == 0) {
         update_data_symbol(&context->table, context->instructionCount);
-        free(line);
-        fclose(inputFile);
-        /* call second pass if no errors */
-        secondPass(context);
-        return 0;
     }
     free(line);
     fclose(inputFile);

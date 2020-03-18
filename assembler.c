@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 #include "symboltable.h"
 #include "assembler.h"
 #include "utils.h"
 #include "constants.h"
 #include "firstpass.h"
+#include "secondpass.h"
 
 union OpCodeWord {
 	unsigned short int value;
@@ -67,7 +69,7 @@ void outMemory(struct assemblerContext *context) {
 	/* context->objFile is already open */
 	int dataWord = 0;
 	while (dataWord < context->dataCount) {
-		fprintf(context->objFile, "%d %05\n",
+		fprintf(context->objFile, "%d %05o\n",
 				context->instructionCount + dataWord,
 				twosComplement(context->memory[dataWord]));
 		dataWord++;
@@ -257,22 +259,22 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 		}
 	}
 	if (numWords == 1) {
-		fprintf(context->objFile, "%d %05\n", context->instructionCount,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 				twosComplement(words[0]));
 		return 0;
 	} else if (numWords == 2) {
-		fprintf(context->objFile, "%d %05\n", context->instructionCount,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 				twosComplement(words[1]));
-		fprintf(context->objFile, "%d %05\n", context->instructionCount,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 				twosComplement(words[1]));
 		return 0;
 	}
 	/* numWords==3 */
-	fprintf(context->objFile, "%d %05\n", context->instructionCount,
+	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 			twosComplement(words[2]));
-	fprintf(context->objFile, "%d %05\n", context->instructionCount,
+	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 			twosComplement(words[2]));
-	fprintf(context->objFile, "%d %05\n", context->instructionCount,
+	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
 			twosComplement(words[2]));
 	return 0;
 }
@@ -936,7 +938,7 @@ struct commandInfo commands[] = { /**/
 { "prn", prn, processGroup6Command }, /**/
 { "rts", rts, processGroup7Command }, /**/
 { "stop", stop, processGroup7Command }, /**/
-{ NULL, NULL } /**/
+{ NULL, -1, NULL } /**/
 };
 
 int processStringLine(struct assemblerContext* context, char*p, char* nextToken,
@@ -1120,10 +1122,8 @@ int processLine(struct assemblerContext *context, char *line) {
 	char *p = line;
 	char *nextToken;
 	char label[MAX_LABEL];
-	char cmd[MAX_CMD];
 	int result;
 	int labelFlag = 0;
-	struct commandInfo *cmdInfo;
 	p = skipWhiteSpaces(p);
 	if (*p == ';' || *p == '\0') {
 		/* comment line*/
@@ -1184,9 +1184,9 @@ int processLine(struct assemblerContext *context, char *line) {
 
 struct assemblerContext *createAssemblerContext(char *fileName) {
 	struct assemblerContext *context = (struct assemblerContext *) calloc(1,
-			sizeof(struct assemblerContext));
 	/* calloc already initialized to zeroes. we take care of the rest */
-	context->fileName = strdup(fileName);
+			sizeof(struct assemblerContext));
+	context->fileName = duplicateString(fileName);
 	return context;
 }
 
@@ -1203,6 +1203,10 @@ int assembler(char *fileName) {
 	int result;
 	struct assemblerContext *context = createAssemblerContext(fileName);
 	result = firstPass(context);
+	if (result == 0) {
+        /* call second pass if no errors */
+        result = secondPass(context);
+	}
 	deallocateAssemblerContext(context);
 	return result;
 }

@@ -10,9 +10,8 @@
 
 #include "assembler.h"
 
+
 int firstPass(struct assemblerContext* context);
-
-
 
 
 #endif /* FIRSTPASS_H_ */

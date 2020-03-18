@@ -44,7 +44,6 @@ int secondPass(struct assemblerContext *context) {
     if (line == NULL) {
         fprintf(stderr, "could not allocate memory error: %s\n", strerror(errno));
         fclose(inputFile);
-        fclose(output);
         free(line);
         return -1;
     }
@@ -62,12 +61,10 @@ int secondPass(struct assemblerContext *context) {
         free(line);
         outDirective(context);
         fclose(inputFile);
-        fclose(output);
         return 0;
     }
     free(line);
     fclose(inputFile);
-    fclose(output);
     return context->errorCount;
 }
 

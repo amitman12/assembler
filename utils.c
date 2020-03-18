@@ -249,3 +249,17 @@ char* strncpyNull(char* dst, char* src, int count) {
     dst[count] = '\0';
     return dst;
 }
+
+char* duplicateString(char* src) {
+	char* dup;
+	if (src == NULL) {
+		return src;
+	}
+	dup = (char *) malloc(strlen(src));
+	if (dup == NULL) {
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	strcpy(dup, src);
+	return dup;
+}
