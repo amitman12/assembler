@@ -598,6 +598,7 @@ int processGroup1Command(struct assemblerContext *context,
 	char *nextToken;
 	struct operand op1;
 	struct operand op2;
+	int result;
 
 	p = skipWhiteSpaces(args);
 	/* p points to the first non whitespace character in args */
@@ -629,25 +630,26 @@ int processGroup1Command(struct assemblerContext *context,
 		return -1;
 	}
 	/* both operands were parsed successfully*/
-	if (context->pass == FIRST_PASS) {
-		if ((op1.addressingType == 2 || op1.addressingType == 3)
-				&& (op2.addressingType == 2 || op2.addressingType == 3)) {
-			/* we only need one extra word in machine code for both operands */
-			return 2;
-		} else if (op2.addressingType == 0) {
-			fprintf(stderr,
-					"%s:%d: ERROR: dest operand addressing of command %s cannot be immediate addressing\n",
-					context->fileName, context->lineNumber, cmdInfo->command);
-			return ADDRESSING_ERROR;
-		} else {
-			/* we need one word in machine code per operand and one for the command */
-			return 3;
-		}
+	if ((op1.addressingType == 2 || op1.addressingType == 3)
+			&& (op2.addressingType == 2 || op2.addressingType == 3)) {
+		/* we only need one extra word in machine code for both operands */
+		result = 2;
+	} else if (op2.addressingType == 0) {
+		fprintf(stderr,
+				"%s:%d: ERROR: dest operand addressing of command %s cannot be immediate addressing\n",
+				context->fileName, context->lineNumber, cmdInfo->command);
+		return ADDRESSING_ERROR;
+	} else {
+		/* we need one word in machine code per operand and one for the command */
+		result = 3;
 	}
-	codeCommand(context, cmdInfo, &op1, &op2);
+
+	if (context->pass == SECOND_PASS) {
+		codeCommand(context, cmdInfo, &op1, &op2);
+	}
+	return result;
 	/* successful parse and second parse - we code here */
 	/* command is in cmd. operand 1 is in op1 and operand 2 is in op2 */
-	return 1;
 
 }
 
@@ -658,6 +660,7 @@ int processGroup2Command(struct assemblerContext *context,
 	char *nextToken;
 	struct operand op1;
 	struct operand op2;
+	int result;
 
 	p = skipWhiteSpaces(args);
 	/* p points to the first non whitespace character in args */
@@ -690,23 +693,22 @@ int processGroup2Command(struct assemblerContext *context,
 		return -1;
 	}
 	/* both operands were parsed successfully*/
-	if (context->pass == FIRST_PASS) {
-		if ((op1.addressingType == 2 || op1.addressingType == 3)
-				&& (op2.addressingType == 2 || op2.addressingType == 3)) {
-			/* we only need one extra word in machine code for both operands */
-			return 2;
-		} else {
-			/* all addressing methods are legal for this command */
-			/* we need one word in machine code per operand and one for the command */
-			return 3;
-		}
+
+	if ((op1.addressingType == 2 || op1.addressingType == 3)
+			&& (op2.addressingType == 2 || op2.addressingType == 3)) {
+		/* we only need one extra word in machine code for both operands */
+		result = 2;
+	} else {
+		/* all addressing methods are legal for this command */
+		/* we need one word in machine code per operand and one for the command */
+		result = 3;
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, &op1, &op2);
+	if (context->pass == SECOND_PASS) {
+		codeCommand(context, cmdInfo, &op1, &op2);
+	}
+	return result;
 	/* successful parse and second parse - we code here */
 	/* command is in cmdInfo->command. operand 1 is in op1 and operand 2 is in op2 */
-	return 1;
-
 }
 
 int processGroup3Command(struct assemblerContext *context,
@@ -717,6 +719,7 @@ int processGroup3Command(struct assemblerContext *context,
 	char *nextToken;
 	struct operand op1;
 	struct operand op2;
+	int result;
 
 	p = skipWhiteSpaces(args);
 	/* p points to the first non whitespace character in args */
@@ -748,29 +751,28 @@ int processGroup3Command(struct assemblerContext *context,
 		return -1;
 	}
 	/* both operands were parsed successfully*/
-	if (context->pass == FIRST_PASS) {
-		if (op1.addressingType != 1) {
+
+	if (op1.addressingType != 1) {
+		fprintf(stderr,
+				"%s:%d: ERROR: source addressing type of command %s has to be Direct Addressing\n",
+				context->fileName, context->lineNumber, cmdInfo->command);
+		return ADDRESSING_ERROR;
+	} else {
+		if (op2.addressingType == 0) {
 			fprintf(stderr,
-					"%s:%d: ERROR: source addressing type of command %s has to be Direct Addressing\n",
+					"%s:%d: ERROR: target addressing type of command %s cannot be Immediate Addressing\n",
 					context->fileName, context->lineNumber, cmdInfo->command);
 			return ADDRESSING_ERROR;
-		} else {
-			if (op2.addressingType == 0) {
-				fprintf(stderr,
-						"%s:%d: ERROR: target addressing type of command %s cannot be Immediate Addressing\n",
-						context->fileName, context->lineNumber,
-						cmdInfo->command);
-				return ADDRESSING_ERROR;
-			}
-			/* we need one word in machine code per operand and one for the command */
-			return 3;
 		}
+		/* we need one word in machine code per operand and one for the command */
+		result = 3;
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, &op1, &op2);
-	/* successful parse and second parse - we code here */
-	/* command is in cmdInfo->command. operand 1 is in op1 and operand 2 is in op2 */
-	return 1;
+	if (context->pass == SECOND_PASS) {
+		/* successful parse and second parse - we code here */
+
+		codeCommand(context, cmdInfo, &op1, &op2);
+	}
+	return result;
 }
 
 int processGroup4Command(struct assemblerContext *context,
@@ -780,6 +782,7 @@ int processGroup4Command(struct assemblerContext *context,
 	char *p;
 	char *nextToken;
 	struct operand op;
+	int result;
 
 	p = skipWhiteSpaces(args);
 	/* p points to the first non whitespace character in args */
@@ -799,23 +802,22 @@ int processGroup4Command(struct assemblerContext *context,
 	}
 
 	/* operand was parsed successfully*/
-	if (context->pass == FIRST_PASS) {
-		if (op.addressingType == 0) {
-			fprintf(stderr,
-					"%s:%d: ERROR: dest addressing type of command %s cannot be Immediate Addressing\n",
-					context->fileName, context->lineNumber, cmdInfo->command);
-			return ADDRESSING_ERROR;
-		} else {
-			/* we need one word in machine code per operand and one for the command */
-			/* one operand , one word*/
-			return 2;
-		}
+
+	if (op.addressingType == 0) {
+		fprintf(stderr,
+				"%s:%d: ERROR: dest addressing type of command %s cannot be Immediate Addressing\n",
+				context->fileName, context->lineNumber, cmdInfo->command);
+		return ADDRESSING_ERROR;
+	} else {
+		/* we need one word in machine code per operand and one for the command */
+		/* one operand , one word*/
+		result = 2;
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, &op, NULL);
-	/* successful parse and second parse - we code here */
-	/* command is in cmdInfo->command. operand 1 is in op and operand 2 is NULL */
-	return 1;
+	if (context->pass == SECOND_PASS) {
+		/* successful parse and second parse - we code here */
+		codeCommand(context, cmdInfo, &op, NULL);
+	}
+	return result;
 }
 
 int processGroup5Command(struct assemblerContext *context,
@@ -825,6 +827,7 @@ int processGroup5Command(struct assemblerContext *context,
 	char *p;
 	char *nextToken;
 	struct operand op;
+	int result;
 
 	p = skipWhiteSpaces(args);
 	/* p points to the first non whitespace character in args */
@@ -844,23 +847,22 @@ int processGroup5Command(struct assemblerContext *context,
 	}
 
 	/* operand was parsed successfully*/
-	if (context->pass == FIRST_PASS) {
-		if (op.addressingType == 0 || op.addressingType == 3) {
-			fprintf(stderr,
-					"%s:%d: ERROR: dest addressing type cannot be Immediate Addressing or Direct Register Addressing\n",
-					context->fileName, context->lineNumber);
-			return ADDRESSING_ERROR;
-		} else {
-			/* we need one word in machine code per operand and one for the command */
-			/* one operand , one word*/
-			return 2;
-		}
+
+	if (op.addressingType == 0 || op.addressingType == 3) {
+		fprintf(stderr,
+				"%s:%d: ERROR: dest addressing type cannot be Immediate Addressing or Direct Register Addressing\n",
+				context->fileName, context->lineNumber);
+		return ADDRESSING_ERROR;
+	} else {
+		/* we need one word in machine code per operand and one for the command */
+		/* one operand , one word*/
+		result = 2;
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, &op, NULL);
-	/* successful parse and second parse - we code here */
-	/* command is in cmdInfo->command. operand 1 is in op and op2 is NULL*/
-	return 1;
+	if(context->pass == SECOND_PASS){
+		/* successful parse and second parse - we code here */
+		codeCommand(context, cmdInfo, &op, NULL);
+	}
+	return result;
 }
 
 int processGroup6Command(struct assemblerContext *context,
@@ -890,14 +892,12 @@ int processGroup6Command(struct assemblerContext *context,
 	/* every addressing method is legal for prn */
 	/* we need one word in machine code per operand and one for the command */
 	/* one operand , one word*/
-	if (context->pass == FIRST_PASS) {
-		return 2;
+	if(context->pass==SECOND_PASS){
+		codeCommand(context, cmdInfo, &op, NULL);
+		/* successful parse and second parse - we code here */
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, &op, NULL);
-	/* successful parse and second parse - we code here */
-	/* command is in cmdInfo->command. operand 1 is in op1*/
-	return 1;
+
+	return 2;
 }
 
 int processGroup7Command(struct assemblerContext *context,
@@ -910,13 +910,11 @@ int processGroup7Command(struct assemblerContext *context,
 		return SYNTAX_ERROR;
 	}
 	/* one word in machine code needed*/
-	if (context->pass == FIRST_PASS) {
-		return 1;
+	if(context->pass==SECOND_PASS){
+		codeCommand(context, cmdInfo, NULL, NULL);
+		/* successful parse and second parse - we code here */
+		/* command is in cmdInfo->command. operands are both NULL*/
 	}
-	/* if we get here we're in 2nd pass */
-	codeCommand(context, cmdInfo, NULL, NULL);
-	/* successful parse and second parse - we code here *//* if we get here we're in 2nd pass */
-	/* command is in cmdInfo->command. operands are both NULL*/
 	return 1;
 	/* command is in cmdInfo->command. operand 1 is in op1*/
 }
@@ -1105,7 +1103,7 @@ int processCommandLine(struct assemblerContext *context, char *p,
 		return COMMAND_DOESNT_EXIST;
 	}
 	nextToken = skipWhiteSpaces(nextToken);
-	result = cmdInfo->processCommand(context, cmdInfo, cmd, nextToken);
+	result = cmdInfo->processCommand(context, cmdInfo, nextToken);
 
 	if (result < 0) {
 		return result;
@@ -1197,6 +1195,7 @@ void deallocateAssemblerContext(struct assemblerContext *p) {
 		fclose(p->objFile);
 	}
 	free(p->fileName);
+	free(p->memory);
 	dealloc_symbol_table(&p->table);
 }
 

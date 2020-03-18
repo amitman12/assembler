@@ -25,7 +25,7 @@ struct assemblerContext {
 struct commandInfo {
     char* command;
     int commandNumber;
-    int (*processCommand)(struct assemblerContext* context, struct commandInfo*, char* cmd, char* args);
+    int (*processCommand)(struct assemblerContext* context, struct commandInfo*, char* args);
 };
 
 extern struct commandInfo commands[];
