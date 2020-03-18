@@ -25,23 +25,32 @@ int secondPass(struct assemblerContext *context) {
     /* returns 0 on success, otherwise returns number of errors */
     int result;
     char *line;
-    FILE *inputFile = fopenFileWithExt(context->fileName,"r","as");
-    FILE* output = fopenFileWithExt(context->fileName,"w","ob");
-    if (inputFile == NULL||output==NULL) {
+    FILE* inputFile;
+    FILE* output;
+    inputFile = fopenFileWithExt(context->fileName,"r","as");
+    if (inputFile == NULL) {
         fprintf(stderr, "could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
         return -1;
     }
+    output = fopenFileWithExt(context->fileName,"w","ob");
+    if (output==NULL) {
+        fprintf(stderr, "could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));
+        fclose(inputFile);
+        return -1;
+    }
+    context->objFile = output;
     context->pass = SECOND_PASS;
     line = (char *) malloc(MAX_CMD);
     if (line == NULL) {
         fprintf(stderr, "could not allocate memory error: %s\n", strerror(errno));
+        fclose(inputFile);
+        fclose(output);
         free(line);
         return -1;
     }
-    /* write title into output file */
+    /* write title line into output file */
 	fprintf(output, "%d %d\n",context->instructionCount,context->dataCount);
 	context->instructionCount = 0;
-
     while (fgets(line, MAX_CMD, inputFile)) {
         chomp(line);
         ++context->lineNumber;
@@ -51,13 +60,14 @@ int secondPass(struct assemblerContext *context) {
     }
     if (context->errorCount == 0) {
         free(line);
-        /* still need to create output files here */
         outDirective(context);
         fclose(inputFile);
+        fclose(output);
         return 0;
     }
     free(line);
     fclose(inputFile);
+    fclose(output);
     return context->errorCount;
 }
 
