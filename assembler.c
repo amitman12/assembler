@@ -283,14 +283,16 @@ int codeNumber(struct assemblerContext *context, int number, int count) {
 	/* reallocates space for .data argument and writes it in memory in correct base */
 	/* returns 0 on success*/
 	context->memory = (int *) realloc(context->memory,
-			context->dataCount + count);
+			context->dataCount + BYTES_IN_WORD);
+	/* was count changed to BYTES_IN_WORD in line above?*/
 	/* each word in machine code is 15 bits which means we need 2 bytes per word. and a number is 1 word  */
 	if (context->memory == NULL) {
 		fprintf(stderr, "ERROR: could not allocate memory\n");
 		free(context->memory);
 		return -1;
 	}
-	context->memory[context->dataCount + count - 1] = number;
+	/* was +count -1 in line below, changed to BYTES_IN_WORD*/
+	context->memory[context->dataCount + BYTES_IN_WORD] = number;
 	/* we write into memory in location data count + count - 1 */
 	return 0;
 }
@@ -299,7 +301,7 @@ int codeString(struct assemblerContext *context, char *str) {
 	char *p;
 	int result;
 	for (p = str; *p; ++p) {
-		if ((result = codeNumber(context, p - str + 1, (int) *p)) != 0) {
+		if ((result = codeNumber(context, (int) *p, p - str + 1) != 0)) {
 			return result;
 		}
 	}
@@ -1133,37 +1135,37 @@ int processLine(struct assemblerContext *context, char *line) {
 	nextToken = readToken(p, " \t:");
 	if (*nextToken == ':') {
 		/* new label defined in this line*/
-		if (nextToken - p == 0) {
-			fprintf(stderr, "%s:%d: ERROR: expecting non empty label\n",
-					context->fileName, context->lineNumber);
-			return LABEL_EMPTY;
+		if(context->pass==FIRST_PASS){
+			if (nextToken - p == 0) {
+				fprintf(stderr, "%s:%d: ERROR: expecting non empty label\n",
+						context->fileName, context->lineNumber);
+				return LABEL_EMPTY;
+			}
+			if (nextToken - p > MAX_LABEL) {
+				fprintf(stderr, "%s:%d: ERROR: label too long\n", context->fileName,
+						context->lineNumber);
+				return LABEL_TOO_LONG;
+			}
+			strncpyNull(label, p, nextToken - p);
+			if (find_symbol(&context->table, label)) {
+				fprintf(stderr, "%s:%d: ERROR: label already exists\n",
+						context->fileName, context->lineNumber);
+				return LABEL_ALREADY_EXISTS;
+			}
+			if (is_reserved_word(label)) {
+				fprintf(stderr, "%s:%d: ERROR: label can't be a reserved word\n",
+						context->fileName, context->lineNumber);
+				return RESERVED_WORD;
+			}
+			if (is_legal(label) != 0) {
+				fprintf(stderr, "%s:%d: ERROR: illegal label\n", context->fileName,
+						context->lineNumber);
+				return ILLEGAL_LABEL;
+			}
 		}
-		if (nextToken - p > MAX_LABEL) {
-			fprintf(stderr, "%s:%d: ERROR: label too long\n", context->fileName,
-					context->lineNumber);
-			return LABEL_TOO_LONG;
-		}
-		strncpyNull(label, p, nextToken - p);
-		if (find_symbol(&context->table, label)) {
-			fprintf(stderr, "%s:%d: ERROR: label already exists\n",
-					context->fileName, context->lineNumber);
-			return LABEL_ALREADY_EXISTS;
-		}
-		if (is_reserved_word(label)) {
-			fprintf(stderr, "%s:%d: ERROR: label can't be a reserved word\n",
-					context->fileName, context->lineNumber);
-			return RESERVED_WORD;
-		}
-		if (is_legal(label) != 0) {
-			fprintf(stderr, "%s:%d: ERROR: illegal label\n", context->fileName,
-					context->lineNumber);
-			return ILLEGAL_LABEL;
-		}
-
 		labelFlag = 1;
 		p = skipWhiteSpaces(nextToken + 1);
 		nextToken = readToken(p, " \t");
-
 	}
 
 	/*now p points to the first non-label token (word like command or .data) */

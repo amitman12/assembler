@@ -29,7 +29,7 @@
 #define DOT_STRING 7
 #define DOT_DATA 5
 #define DOT_EXTERN 7
-#define DOT_ENTRY -6
+#define DOT_ENTRY 6
 #define EMPTY_STRING -10
 #define EMPTY_IMMEDIATE -11
 #define ILLEGAL_LABEL -12
