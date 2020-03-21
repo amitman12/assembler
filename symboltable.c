@@ -113,34 +113,6 @@ int checkLabel(struct symboltable* table, char* label) {
 	return 1;
 }
 
-int outExterns(struct symboltable table, char* output) {
-	/* copies all .extern info to output file */
-	/* returns -1 on fail 0 on success*/
-	int count = 0;
-	struct symbol* node;
-	FILE* out;
-	node = table.head;
-	while (node) {
-		if (node->type == External) {
-			if (count == 0) {
-				out = fopenFileWithExt(output, "w", ".ext");
-				if (out == NULL) {
-					fprintf(stderr,
-							"ERROR: could not create/open output file.\n");
-					return -1;
-				}
-			}
-			fprintf(out, "%s %d\n", node->label, node->address);
-			count++;
-		}
-		node=node->next;
-	}
-	if(count>0){
-		/*close file*/
-		fclose(out);
-	}
-	return 0;
-}
 
 int outEntries(struct symboltable table, char* output) {
 	/* copies all .entry info to output file */

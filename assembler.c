@@ -63,14 +63,21 @@ union ImmediateWord {
 	} info;
 };
 
-void print_symboltable(struct symboltable* table){
-	struct symbol* temp = table->head;
-	while(temp!=NULL){
-		printf("%s\n",temp->label);
-		temp = temp->next;
-	}
-}
+int createOutExtern(struct assemblerContext *context, char* label, int infoWord) {
+	/* copies given .extern label to output file */
+	/* returns -1 on fail 0 on success*/
 
+	FILE* out;
+	out = fopenFileWithExt(context->fileName, "w", ".ext");
+	if (out == NULL) {
+		fprintf(stderr, "ERROR: could not create/open output file.\n");
+		return -1;
+	}
+
+	fprintf(out, "%s %d\n", label, context->instructionCount + 100 + infoWord);
+	fclose(out);
+	return 0;
+}
 
 void outMemory(struct assemblerContext *context) {
 	/* this function copies data image to output file. */
@@ -91,11 +98,11 @@ int outDirective(struct assemblerContext *context) {
 	/* this function is only called after second pass has finished */
 	/* returns -1 on error. 0 on success */
 	int result;
-	result = outExterns(context->table, context->fileName);
-	if (result == -1) {
-		fprintf(stderr, "ERROR: could not create/open output .ext file.\n");
-		return -1;
-	}
+	/*result = outExterns(context->table, context->fileName);
+	 if (result == -1) {
+	 fprintf(stderr, "ERROR: could not create/open output .ext file.\n");
+	 return -1;
+	 }*/
 	result = outEntries(context->table, context->fileName);
 	if (result == -1) {
 		fprintf(stderr, "ERROR: could not create/open output .ent file.\n");
@@ -176,6 +183,8 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 							"ERROR: label %s is not defined or .extern \n",
 							op1->info.symbolName);
 				} else if (symbol->type == External) {
+					/*put output in .ext file*/
+					createOutExtern(context, symbol->label,1);
 					refWord1->info.external = 1;
 				} else {
 					/* operand 2 is a label defined in this file */
@@ -252,6 +261,8 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 					/*operand 1 is an external label*/
 					/* we leave bits 3 to 14 untouched */
 					refWord1->info.external = 1;
+					/*put output in .ext file*/
+					createOutExtern(context, symbol->label,1);
 				} else {
 					/* operand 2 is a label defined in this file */
 					refWord1->info.address = symbol->address;
@@ -285,6 +296,8 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 					/*operand 2 is an external label*/
 					/* we leave bits 3 to 14 untouched */
 					refWord2->info.external = 1;
+					/*put output in .ext file*/
+					createOutExtern(context, symbol->label,2);
 				} else {
 					/* operand 2 is a label defined in this file */
 					refWord2->info.address = symbol->address;
@@ -321,7 +334,7 @@ int codeNumber(struct assemblerContext *context, int number) {
 	/* reallocates space for .data argument and writes it in memory in correct base */
 	/* returns 0 on success*/
 	context->memory = (int *) realloc(context->memory,
-			(context->dataCount+1)*sizeof(int));
+			(context->dataCount + 1) * sizeof(int));
 	/* was count changed to BYTES_IN_WORD in line above?*/
 	if (context->memory == NULL) {
 		fprintf(stderr, "ERROR: could not allocate memory\n");
@@ -1001,8 +1014,7 @@ int processStringLine(struct assemblerContext* context, char*p, char* nextToken,
 		if (labelFlag == 1) {
 			/*add newly defined symbol to symboltable*/
 			add_symbol(&context->table,
-					create_symbol(&context->table, label, loc,
-							Regular, Data));
+					create_symbol(&context->table, label, loc, Regular, Data));
 		}
 		/*successful parse - one word for each operand and one word for .data*/
 		/* we update dataCount when we code the string */
@@ -1033,8 +1045,7 @@ int processDataLine(struct assemblerContext* context, char*p, char* nextToken,
 		if (labelFlag == 1) {
 			/*add newly defined symbol to symboltable*/
 			add_symbol(&context->table,
-					create_symbol(&context->table, label, loc,
-							Regular, Data));
+					create_symbol(&context->table, label, loc, Regular, Data));
 		}
 		/*successful parse - one word for each operand and one word for .data*/
 		/* we update dataCount when we code the numbers for .data line */
