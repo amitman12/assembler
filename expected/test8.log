@@ -1,5 +1,5 @@
-test8.as:21: ERROR: invalid argument for .extern 
-test8.as:24: ERROR: invalid argument for .extern 
-test8.as:27: ERROR: invalid argument for .extern 
-test8.as:31: ERROR: argument for .extern can't be a reserved word 
-test8.as:34: ERROR: invalid argument for .extern 
+test8:21: ERROR: invalid argument for .extern 
+test8:24: ERROR: invalid argument for .extern 
+test8:27: ERROR: invalid argument for .extern 
+test8:31: ERROR: argument for .extern can't be a reserved word 
+test8:34: ERROR: invalid argument for .extern 

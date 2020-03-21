@@ -1,12 +1,12 @@
-test6.as:5: ERROR: expected valid operand
-test6.as:5: ERROR: command prn takes exactly 1 operand
-test6.as:17: ERROR: expected valid operand
-test6.as:17: ERROR: command prn takes exactly 1 operand
-test6.as:21: ERROR: command prn takes exactly 1 operand
-test6.as:24: ERROR: command prn takes exactly 1 operand
-test6.as:27: ERROR: expected valid operand
-test6.as:27: ERROR: command prn takes exactly 1 operand
-test6.as:35: ERROR: command prn takes exactly 1 operand
-test6.as:39: ERROR: expected valid operand
-test6.as:39: ERROR: command prn takes exactly 1 operand
-test6.as:43: ERROR: command prn takes exactly 1 operand
+test6:5: ERROR: expected valid operand
+test6:5: ERROR: command prn takes exactly 1 operand
+test6:17: ERROR: expected valid operand
+test6:17: ERROR: command prn takes exactly 1 operand
+test6:21: ERROR: command prn takes exactly 1 operand
+test6:24: ERROR: command prn takes exactly 1 operand
+test6:27: ERROR: expected valid operand
+test6:27: ERROR: command prn takes exactly 1 operand
+test6:35: ERROR: command prn takes exactly 1 operand
+test6:39: ERROR: expected valid operand
+test6:39: ERROR: command prn takes exactly 1 operand
+test6:43: ERROR: command prn takes exactly 1 operand

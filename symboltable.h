@@ -11,7 +11,7 @@
 #include "constants.h"
 
 struct symbol {
-    char label[MAX_LABEL];
+    char label[MAX_LABEL_LEN+1];
     int address;
     /* type is enum in constants.h */
     int type;

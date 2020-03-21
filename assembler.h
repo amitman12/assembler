@@ -20,6 +20,7 @@ struct assemblerContext {
     int dataCount;
     int* memory;
     FILE* objFile;
+    FILE* extFile;
 };
 
 struct commandInfo {
@@ -50,8 +51,8 @@ void deallocateAssemblerContext(struct assemblerContext* p);
 
 int processDotString(struct assemblerContext* context, char* args);
 int processDotData(struct assemblerContext* context, char* args);
-int processDotExtern(struct assemblerContext* context, char* directive,char* args);
-int processDotEntry(struct assemblerContext* context,char* directive, char* args);
+int processDotExtern(struct assemblerContext* context, char* args);
+int processDotEntry(struct assemblerContext* context, char* args);
 
 int processGroup1Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);
 int processGroup2Command(struct assemblerContext* context, struct commandInfo* cmdInfo, char* args);

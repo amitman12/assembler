@@ -1,27 +1,27 @@
-test4.as:17: ERROR: expected valid operand
-test4.as:17: ERROR: command clr requires exactly one operand
-test4.as:20: ERROR: expected valid operand
-test4.as:20: ERROR: command inc requires exactly one operand
-test4.as:23: ERROR: expected valid operand
-test4.as:23: ERROR: command clr requires exactly one operand
-test4.as:26: ERROR: expected valid operand
-test4.as:26: ERROR: command dec requires exactly one operand
-test4.as:29: ERROR: expected valid operand
-test4.as:29: ERROR: command red requires exactly one operand
-test4.as:32: ERROR: expected valid operand
-test4.as:32: ERROR: command not requires exactly one operand
-test4.as:35: ERROR: dest addressing type of command not cannot be Immediate Addressing
-test4.as:38: ERROR: dest addressing type of command inc cannot be Immediate Addressing
-test4.as:41: ERROR: dest addressing type of command dec cannot be Immediate Addressing
-test4.as:44: ERROR: dest addressing type of command red cannot be Immediate Addressing
-test4.as:47: ERROR: dest addressing type of command clr cannot be Immediate Addressing
-test4.as:65: ERROR: expected valid operand
-test4.as:65: ERROR: command inc requires exactly one operand
-test4.as:68: ERROR: expected valid operand
-test4.as:68: ERROR: command clr requires exactly one operand
-test4.as:71: ERROR: expected valid operand
-test4.as:71: ERROR: command dec requires exactly one operand
-test4.as:74: ERROR: expected valid operand
-test4.as:74: ERROR: command red requires exactly one operand
-test4.as:77: ERROR: expected valid operand
-test4.as:77: ERROR: command not requires exactly one operand
+test4:17: ERROR: expected valid operand
+test4:17: ERROR: command clr requires exactly one operand
+test4:20: ERROR: expected valid operand
+test4:20: ERROR: command inc requires exactly one operand
+test4:23: ERROR: expected valid operand
+test4:23: ERROR: command clr requires exactly one operand
+test4:26: ERROR: expected valid operand
+test4:26: ERROR: command dec requires exactly one operand
+test4:29: ERROR: expected valid operand
+test4:29: ERROR: command red requires exactly one operand
+test4:32: ERROR: expected valid operand
+test4:32: ERROR: command not requires exactly one operand
+test4:35: ERROR: dest addressing type of command not cannot be Immediate Addressing
+test4:38: ERROR: dest addressing type of command inc cannot be Immediate Addressing
+test4:41: ERROR: dest addressing type of command dec cannot be Immediate Addressing
+test4:44: ERROR: dest addressing type of command red cannot be Immediate Addressing
+test4:47: ERROR: dest addressing type of command clr cannot be Immediate Addressing
+test4:65: ERROR: expected valid operand
+test4:65: ERROR: command inc requires exactly one operand
+test4:68: ERROR: expected valid operand
+test4:68: ERROR: command clr requires exactly one operand
+test4:71: ERROR: expected valid operand
+test4:71: ERROR: command dec requires exactly one operand
+test4:74: ERROR: expected valid operand
+test4:74: ERROR: command red requires exactly one operand
+test4:77: ERROR: expected valid operand
+test4:77: ERROR: command not requires exactly one operand

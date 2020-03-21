@@ -1,6 +1,6 @@
-test9.as:15: ERROR: .string directive syntax error
-test9.as:24: ERROR: .string directive syntax error
-test9.as:27: ERROR: .string directive syntax error
-test9.as:30: ERROR: .string directive syntax error
-test9.as:34: ERROR: .string directive syntax error
-test9.as:37: ERROR: .string directive syntax error
+test9:15: ERROR: .string directive syntax error
+test9:24: ERROR: .string directive syntax error
+test9:27: ERROR: .string directive syntax error
+test9:30: ERROR: .string directive syntax error
+test9:34: ERROR: .string directive syntax error
+test9:37: ERROR: .string directive syntax error

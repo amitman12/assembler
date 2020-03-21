@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include "utils.h"
 #include "constants.h"
-#include "symboltable.h"
 
 FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
 	/* open file with given extension */
@@ -19,20 +18,6 @@ FILE* fopenFileWithExt(char* fileName, char* mode, char* ext) {
 unsigned int twosComplement(int x) {
     return (x >= 0) ? x : ((~((unsigned int)-x) & 0x7fff) + 1);
 }
-
-signed short int swapBits(signed short int num){
-	/*swapBits gets num and returns a number with swapped bits */
-	signed short int result;
-	int i;
-	result = 0;
-	for(i=0;i<BITS_IN_WORD;i++){
-		result = result + ((num&1)^1);
-		result = result<<1;
-		num = num<<1;
-	}
-	return result;
-}
-
 
 
 
@@ -46,19 +31,6 @@ void chomp(char* str) {
 }
 
 
-
-char* find_last_quote(char*p){
-	/* returns last quote in a string */
-	char* last;
-	while(*p!='\0'){
-		if(*p=='\"'){
-			last = p;
-		}
-		p++;
-	}
-	return last;
-}
-
 char* readString(char*p, char*str, int* len){
 	/* start - p points to first argument in string */
 	/* end - p points to end of line */
@@ -67,7 +39,6 @@ char* readString(char*p, char*str, int* len){
 	int count = 0;
 	char* end;
 	char* start;
-	end = find_last_quote(p);
 	p = skipWhiteSpaces(p);
 	if(*p=='\0'){
 		*len = count;
@@ -80,6 +51,12 @@ char* readString(char*p, char*str, int* len){
 		return NULL;
 	}
 	p++;
+    end = strrchr(p, '\"');
+    if (end == NULL) {
+        /* illegal string */
+        *len = -1;
+        return NULL;
+    }
 	start = p;
 	while(p<end&&isprint(*p)){
 		count++;

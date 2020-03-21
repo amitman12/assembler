@@ -90,8 +90,7 @@ void update_data_symbol(struct symboltable* table, int instruction_count) {
 	while (node != NULL) {
 		if (node->location == Data) {
 			modify_symbol(table, node->label,
-					node->address + 100 + instruction_count, node->location,
-					node->type);
+					node->address + 100 + instruction_count, node->type, node->location);
 		}
 		node = node->next;
 	}
@@ -101,7 +100,7 @@ int checkLabel(struct symboltable* table, char* label) {
 	/* returns 1 if label doesn't already exist, and is legal */
 	int len;
 	len = strlen(label);
-	if (len == 0 || len > MAX_LABEL) {
+	if (len == 0 || len > MAX_LABEL_LEN) {
 		return 0;
 	}
 	if (is_reserved_word(label) == 1) {
@@ -124,7 +123,7 @@ int outEntries(struct symboltable table, char* output) {
 	while (node) {
 		if (node->type == Entry) {
 			if (count == 0) {
-				out = fopenFileWithExt(output, "w", ".ent");
+				out = fopenFileWithExt(output, "w", "ent");
 				if (out == NULL) {
 					fprintf(stderr,
 							"ERROR: could not create/open output file.\n");

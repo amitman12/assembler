@@ -41,7 +41,7 @@
 
 
 
-#define MAX_LABEL 31
+#define MAX_LABEL_LEN 31
 #define MAX_CMD 1000
 
 
@@ -50,7 +50,8 @@ extern char* opcodes[];
 enum opcodes {mov=0,cmp=1,add=2,sub=3,lea=4,clr=5,not=6,inc=7,dec=8,jmp=9,bne=10,red=11,prn=12,jsr=13,rts=14,stop=15};
 
 enum location {Code = 1, Data = 0, Unknown_Location = -1};
-enum type {External = 1, Entry = 0, Unknown_Type = -1,Regular = 2};
+enum type {Unknown_Type = 0, Entry = 1, External = 2, Regular = 3};
+
 
 enum operand_type {Register = 0, Immediate = 1, Label = 2};
 enum addressing_type {Immediate_Addressing=0, Direct_Addressing=1, Indirect_Register_Addressing=2, Direct_Register_Addressing=3};

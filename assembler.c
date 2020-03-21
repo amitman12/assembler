@@ -63,19 +63,27 @@ union ImmediateWord {
 	} info;
 };
 
-int createOutExtern(struct assemblerContext *context, char* label, int infoWord) {
+int ensureOutExternFile(struct assemblerContext *context) {
 	/* copies given .extern label to output file */
 	/* returns -1 on fail 0 on success*/
 
-	FILE* out;
-	out = fopenFileWithExt(context->fileName, "w", ".ext");
-	if (out == NULL) {
+	if (context->extFile != NULL) {
+	    return 0;
+	}
+    context->extFile = fopenFileWithExt(context->fileName, "w", "ext");
+	if (context->extFile == NULL) {
 		fprintf(stderr, "ERROR: could not create/open output file.\n");
 		return -1;
 	}
+	return 0;
+}
 
-	fprintf(out, "%s %d\n", label, context->instructionCount + 100 + infoWord);
-	fclose(out);
+int writeOutExtern(struct assemblerContext *context, char* label, int infoWord) {
+    int result = ensureOutExternFile(context);
+    if (result != 0) {
+        return result;
+    }
+	fprintf(context->extFile, "%s %d\n", label, context->instructionCount + 100 + infoWord);
 	return 0;
 }
 
@@ -184,7 +192,7 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 							op1->info.symbolName);
 				} else if (symbol->type == External) {
 					/*put output in .ext file*/
-					createOutExtern(context, symbol->label,1);
+                    writeOutExtern(context, symbol->label,1);
 					refWord1->info.external = 1;
 				} else {
 					/* operand 2 is a label defined in this file */
@@ -262,7 +270,7 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 					/* we leave bits 3 to 14 untouched */
 					refWord1->info.external = 1;
 					/*put output in .ext file*/
-					createOutExtern(context, symbol->label,1);
+                    writeOutExtern(context, symbol->label,1);
 				} else {
 					/* operand 2 is a label defined in this file */
 					refWord1->info.address = symbol->address;
@@ -297,7 +305,7 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 					/* we leave bits 3 to 14 untouched */
 					refWord2->info.external = 1;
 					/*put output in .ext file*/
-					createOutExtern(context, symbol->label,2);
+                    writeOutExtern(context, symbol->label,2);
 				} else {
 					/* operand 2 is a label defined in this file */
 					refWord2->info.address = symbol->address;
@@ -358,14 +366,13 @@ int codeString(struct assemblerContext *context, char *str) {
 	return codeNumber(context, 0);
 }
 
-int processDotEntry(struct assemblerContext *context, char *directive,
-		char *args) {
+int processDotEntry(struct assemblerContext *context, char *args) {
 	/* args points to first argument */
 	/* returns errors or number of machine code words needed*/
 	/* adds extern labels to symboltable */
 	/* we only call this function in second pass */
 	/* modifies symbols to have .entry value */
-	char *label = (char *) calloc(MAX_LABEL, sizeof(char));
+	char *label = (char *) calloc(MAX_LABEL_LEN+1, sizeof(char));
 	int count = 0;
 	struct symbol* symbol;
 
@@ -419,12 +426,11 @@ int processDotEntry(struct assemblerContext *context, char *directive,
 	return count;
 }
 
-int processDotExtern(struct assemblerContext *context, char *directive,
-		char *args) {
+int processDotExtern(struct assemblerContext *context, char *args) {
 	/* args points to first argument */
 	/* returns errors or number of machine code words needed*/
 	/* adds extern labels to symboltable */
-	char *label = (char *) calloc(MAX_LABEL, sizeof(char));
+	char *label = (char *) calloc(MAX_LABEL_LEN+1, sizeof(char));
 	int count = 0;
 
 	while (*args != '\0') {
@@ -566,6 +572,7 @@ char *readCommandOperand(struct assemblerContext *context, char *p,
 	/* is command is 1 if line is a command line and 0 on directive line */
 	int *err_type;
 	char *nextToken;
+    nextToken = NULL;
 	err_type = (int *) malloc(sizeof(int));
 	op->addressingType = 0;
 
@@ -1065,7 +1072,7 @@ int processExternalLine(struct assemblerContext* context, char*p,
 		return SYNTAX_ERROR;
 	}
 	nextToken = skipWhiteSpaces(nextToken);
-	words = processDotExtern(context, ".extern", nextToken);
+	words = processDotExtern(context, nextToken);
 	if (words < 0) {
 		/* processDotData failed and printed errors*/
 		return words;
@@ -1087,7 +1094,7 @@ int processEntryLine(struct assemblerContext* context, char*p, char* nextToken,
 			return SYNTAX_ERROR;
 		}
 		nextToken = skipWhiteSpaces(nextToken);
-		words = processDotEntry(context, ".extern", nextToken);
+		words = processDotEntry(context, nextToken);
 		if (words < 0) {
 			/* processDotData failed and printed errors*/
 			return words;
@@ -1170,7 +1177,7 @@ int processLine(struct assemblerContext *context, char *line) {
 	/* pass = 1 on firstpass. pass = 2 on secondpass */
 	char *p = line;
 	char *nextToken;
-	char label[MAX_LABEL];
+	char label[MAX_LABEL_LEN+1];
 	int result;
 	int labelFlag = 0;
 	p = skipWhiteSpaces(p);
@@ -1188,7 +1195,7 @@ int processLine(struct assemblerContext *context, char *line) {
 						context->fileName, context->lineNumber);
 				return LABEL_EMPTY;
 			}
-			if (nextToken - p > MAX_LABEL) {
+			if (nextToken - p > MAX_LABEL_LEN) {
 				fprintf(stderr, "%s:%d: ERROR: label too long\n",
 						context->fileName, context->lineNumber);
 				return LABEL_TOO_LONG;
@@ -1243,6 +1250,9 @@ struct assemblerContext *createAssemblerContext(char *fileName) {
 void deallocateAssemblerContext(struct assemblerContext *p) {
 	if (p->objFile) {
 		fclose(p->objFile);
+	}
+	if (p->extFile) {
+		fclose(p->extFile);
 	}
 	free(p->fileName);
 	free(p->memory);
