@@ -103,6 +103,7 @@ char* readString(char*p, char*str, int* len){
 		/*copies string to str*/
 		*len = count+1;
 		strncpy(str,start,count);
+		str[count] = '\0';
 		return p;
 	}
 	return NULL;
@@ -123,6 +124,7 @@ char* readSymbol(char*p, char* str) {
     }
     end = p;
     strncpy(str,start,end-start);
+    str[end-start] = '\0';
     p = skipWhiteSpaces(p);
     if (*p == '\0') {
         return p;

@@ -17,6 +17,7 @@ int firstPass(struct assemblerContext* context) {
 	/* returns 0 on success, otherwise returns number of errors */
     int result;
     char* line;
+
     FILE* inputFile = fopenFileWithExt(context->fileName,"r","as");
     if (inputFile == NULL) {
         fprintf(stderr,"could not open file \"%s\". error: %s\n", context->fileName, strerror(errno));

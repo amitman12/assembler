@@ -16,12 +16,12 @@ union OpCodeWord {
 		unsigned int absolute :1;
 		unsigned int dstImmediate :1;
 		unsigned int dstDirect :1;
-		unsigned int dstDirectRegister :1;
 		unsigned int dstIndirectRegister :1;
+		unsigned int dstDirectRegister :1;
 		unsigned int srcImmediate :1;
 		unsigned int srcDirect :1;
-		unsigned int srcDirectRegister :1;
 		unsigned int srcIndirectRegister :1;
+		unsigned int srcDirectRegister :1;
 		unsigned int opcode :4;
 		unsigned int unused :1;
 	} info;
@@ -63,6 +63,15 @@ union ImmediateWord {
 	} info;
 };
 
+void print_symboltable(struct symboltable* table){
+	struct symbol* temp = table->head;
+	while(temp!=NULL){
+		printf("%s\n",temp->label);
+		temp = temp->next;
+	}
+}
+
+
 void outMemory(struct assemblerContext *context) {
 	/* this function copies data image to output file. */
 	/* this function is called after second pass if over. */
@@ -70,7 +79,7 @@ void outMemory(struct assemblerContext *context) {
 	int dataWord = 0;
 	while (dataWord < context->dataCount) {
 		fprintf(context->objFile, "%d %05o\n",
-				context->instructionCount + dataWord,
+				context->instructionCount + dataWord + 100,
 				twosComplement(context->memory[dataWord]));
 		dataWord++;
 	}
@@ -112,8 +121,8 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 	union ImmediateWord *immWord2;
 	union ReferenceWord *refWord1;
 	union ReferenceWord *refWord2;
+	struct symbol* symbol;
 	int numWords;
-	numWords = 1;
 
 	memset(words, 0, sizeof(words));
 	/* set words to zero */
@@ -123,6 +132,7 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 	commandWord->info.absolute = 1;
 
 	if (op1 == NULL) {
+		numWords = 1;
 		/*commands stop,rts*/
 		/* these commands only have one word which is the command word */
 		if (strcmp(cmdInfo->command, "stop") == 0) {
@@ -131,18 +141,17 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 			commandWord->info.opcode = rts;
 		}
 	} else {
-		/* we have at least one operand */
-		commandWord->info.srcImmediate = (op1->addressingType
-				== Immediate_Addressing);
-		commandWord->info.srcDirect =
-				(op1->addressingType == Direct_Addressing);
-		commandWord->info.srcIndirectRegister = (op1->addressingType
-				== Indirect_Register_Addressing);
-		commandWord->info.srcDirectRegister = (op1->addressingType
-				== Direct_Register_Addressing);
-
 		if (op2 == NULL) {
 			/* we have exactly one operand */
+			numWords = 2;
+			commandWord->info.dstImmediate = (op1->addressingType
+					== Immediate_Addressing);
+			commandWord->info.dstDirect = (op1->addressingType
+					== Direct_Addressing);
+			commandWord->info.dstIndirectRegister = (op1->addressingType
+					== Indirect_Register_Addressing);
+			commandWord->info.dstDirectRegister = (op1->addressingType
+					== Direct_Register_Addressing);
 			if (op1->addressingType == Direct_Register_Addressing
 					|| op1->addressingType == Indirect_Register_Addressing) {
 				/* first operand is a register  - this means the second one has to be a label or immediate*/
@@ -160,18 +169,32 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 			} else {
 				/* first operand is a label */
 				refWord1 = (union ReferenceWord *) &words[1];
-				if (find_symbol(&context->table, op1->info.symbolName) == NULL) {
-					/*operand 1 is an external label*/
-					/* we leave bits 3 to 14 untouched */
+				symbol = find_symbol(&context->table, op1->info.symbolName);
+				if (symbol == NULL) {
+					/* symbol was not added to symboltable, we add on .extern so this is an error*/
+					fprintf(stderr,
+							"ERROR: label %s is not defined or .extern \n",
+							op1->info.symbolName);
+				} else if (symbol->type == External) {
 					refWord1->info.external = 1;
 				} else {
 					/* operand 2 is a label defined in this file */
-					refWord1->info.address = find_symbol(&context->table,
-							op1->info.symbolName)->address;
-					refWord1->info.absolute = 1;
+					refWord1->info.address = symbol->address;
+					refWord1->info.relocatable = 1;
 				}
 			}
 		} else {
+			numWords = 3;
+			/* 2 operands */
+			/* taking care of command word below */
+			commandWord->info.srcImmediate = (op1->addressingType
+					== Immediate_Addressing);
+			commandWord->info.srcDirect = (op1->addressingType
+					== Direct_Addressing);
+			commandWord->info.srcIndirectRegister = (op1->addressingType
+					== Indirect_Register_Addressing);
+			commandWord->info.srcDirectRegister = (op1->addressingType
+					== Direct_Register_Addressing);
 			commandWord->info.dstImmediate = (op2->addressingType
 					== Immediate_Addressing);
 			commandWord->info.dstDirect = (op2->addressingType
@@ -190,7 +213,7 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 							|| strcmp(cmdInfo->command, "sub") == 0
 							|| strcmp(cmdInfo->command, "add") == 0)) {
 				/* we only need one extra word in machine code for both operands */
-				++numWords;
+				numWords = 2;
 				registerWord1 = (union RegisterWord *) &words[1];
 				registerWord1->info.absolute = 1;
 				registerWord1->info.dstRegister = op2->info.registerId;
@@ -201,9 +224,8 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 				/* bits 0 - 2 get A,R,E fields  - absolute is 1 and rest are 0*/
 				/* bits 9 - 14 get zero */
 			}
-			numWords += 2;
 			/* if we get here it means we need two more words */
-			if (op1->addressingType == Direct_Register_Addressing
+			else if (op1->addressingType == Direct_Register_Addressing
 					|| op1->addressingType == Indirect_Register_Addressing) {
 				/* first operand is a register  - this means the second one has to be a label or immediate*/
 				/* in command group 1, second operand can't be immediate - so that means second operand is a label */
@@ -220,15 +242,21 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 			} else {
 				/* first operand is a label */
 				refWord1 = (union ReferenceWord *) &words[1];
-				if (find_symbol(&context->table, op1->info.symbolName) == NULL) {
+				symbol = find_symbol(&context->table, op1->info.symbolName);
+				if (symbol == NULL) {
+					/* symbol was not added to symboltable, we add on .extern so this is an error*/
+					fprintf(stderr,
+							"ERROR: label %s is not defined or .extern \n",
+							op1->info.symbolName);
+				} else if (symbol->type == External) {
 					/*operand 1 is an external label*/
 					/* we leave bits 3 to 14 untouched */
 					refWord1->info.external = 1;
+				} else {
+					/* operand 2 is a label defined in this file */
+					refWord1->info.address = symbol->address;
+					refWord1->info.relocatable = 1;
 				}
-				/* operand 2 is a label defined in this file */
-				refWord1->info.address = find_symbol(&context->table,
-						op1->info.symbolName)->address;
-				refWord1->info.absolute = 1;
 			}
 
 			if (op2->addressingType == Direct_Register_Addressing
@@ -246,54 +274,62 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 			} else {
 				/* second operand is a label */
 				refWord2 = (union ReferenceWord *) &words[2];
-				if (find_symbol(&context->table, op2->info.symbolName) == NULL) {
+				symbol = find_symbol(&context->table, op2->info.symbolName);
+				if (symbol == NULL) {
+					/* symbol was not added to symboltable, we add on .extern so this is an error*/
+					fprintf(stderr,
+							"ERROR: label %s is not defined or .extern \n",
+							op2->info.symbolName);
+
+				} else if (symbol->type == External) {
 					/*operand 2 is an external label*/
 					/* we leave bits 3 to 14 untouched */
 					refWord2->info.external = 1;
+				} else {
+					/* operand 2 is a label defined in this file */
+					refWord2->info.address = symbol->address;
+					refWord2->info.relocatable = 1;
 				}
-				/* operand 2 is a label defined in this file */
-				refWord2->info.address = find_symbol(&context->table,
-						op2->info.symbolName)->address;
-				refWord2->info.absolute = 1;
 			}
 		}
 	}
 	if (numWords == 1) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
 				twosComplement(words[0]));
 		return 0;
 	} else if (numWords == 2) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
-				twosComplement(words[1]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
+				twosComplement(words[0]));
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 101,
 				twosComplement(words[1]));
 		return 0;
 	}
-	/* numWords==3 */
-	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
-			twosComplement(words[2]));
-	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
-			twosComplement(words[2]));
-	fprintf(context->objFile, "%d %05o\n", context->instructionCount,
-			twosComplement(words[2]));
-	return 0;
+
+	else {
+		/* numWords==3 */
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
+				twosComplement(words[0]));
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 101,
+				twosComplement(words[1]));
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 102,
+				twosComplement(words[2]));
+		return 0;
+	}
 }
 
-int codeNumber(struct assemblerContext *context, int number, int count) {
+int codeNumber(struct assemblerContext *context, int number) {
 	/* reallocates space for .data argument and writes it in memory in correct base */
 	/* returns 0 on success*/
 	context->memory = (int *) realloc(context->memory,
-			context->dataCount + BYTES_IN_WORD);
+			(context->dataCount+1)*sizeof(int));
 	/* was count changed to BYTES_IN_WORD in line above?*/
-	/* each word in machine code is 15 bits which means we need 2 bytes per word. and a number is 1 word  */
 	if (context->memory == NULL) {
 		fprintf(stderr, "ERROR: could not allocate memory\n");
 		free(context->memory);
 		return -1;
 	}
-	/* was +count -1 in line below, changed to BYTES_IN_WORD*/
-	context->memory[context->dataCount + BYTES_IN_WORD] = number;
-	/* we write into memory in location data count + count - 1 */
+	context->memory[context->dataCount] = number;
+	context->dataCount++;
 	return 0;
 }
 
@@ -301,12 +337,12 @@ int codeString(struct assemblerContext *context, char *str) {
 	char *p;
 	int result;
 	for (p = str; *p; ++p) {
-		if ((result = codeNumber(context, (int) *p, p - str + 1) != 0)) {
+		if ((result = codeNumber(context, (int) *p) != 0)) {
 			return result;
 		}
 	}
 	/* copy the null termination */
-	return codeNumber(context, p - str + 1, 0);
+	return codeNumber(context, 0);
 }
 
 int processDotEntry(struct assemblerContext *context, char *directive,
@@ -459,7 +495,7 @@ int processDotData(struct assemblerContext *context, char *args) {
 		count++;
 		/* immediate is in *temp */
 		if (context->pass == FIRST_PASS) {
-			codeNumber(context, *temp, count);
+			codeNumber(context, *temp);
 		}
 		if (*args == ',') {
 			args++;
@@ -467,7 +503,7 @@ int processDotData(struct assemblerContext *context, char *args) {
 			/* now points to next number*/
 		}
 	}
-	/* we need 1 word per immediate plus one for the .data directive*/
+	/* we need 1 word per immediate */
 	return count;
 }
 
@@ -494,8 +530,8 @@ int processDotString(struct assemblerContext *context, char *args) {
 	if (context->pass == FIRST_PASS) {
 		codeString(context, str);
 	}
-	/* we need one word of machine code per char in the string(including \0) plus one for the command */
-	return len + 1;
+	/* we need one word of machine code per char in the string(including \0)*/
+	return len;
 }
 
 struct commandInfo *findCommand(char *cmd) {
@@ -862,7 +898,7 @@ int processGroup5Command(struct assemblerContext *context,
 		/* one operand , one word*/
 		result = 2;
 	}
-	if(context->pass == SECOND_PASS){
+	if (context->pass == SECOND_PASS) {
 		/* successful parse and second parse - we code here */
 		codeCommand(context, cmdInfo, &op, NULL);
 	}
@@ -896,7 +932,7 @@ int processGroup6Command(struct assemblerContext *context,
 	/* every addressing method is legal for prn */
 	/* we need one word in machine code per operand and one for the command */
 	/* one operand , one word*/
-	if(context->pass==SECOND_PASS){
+	if (context->pass == SECOND_PASS) {
 		codeCommand(context, cmdInfo, &op, NULL);
 		/* successful parse and second parse - we code here */
 	}
@@ -914,7 +950,7 @@ int processGroup7Command(struct assemblerContext *context,
 		return SYNTAX_ERROR;
 	}
 	/* one word in machine code needed*/
-	if(context->pass==SECOND_PASS){
+	if (context->pass == SECOND_PASS) {
 		codeCommand(context, cmdInfo, NULL, NULL);
 		/* successful parse and second parse - we code here */
 		/* command is in cmdInfo->command. operands are both NULL*/
@@ -948,7 +984,8 @@ int processStringLine(struct assemblerContext* context, char*p, char* nextToken,
 	/* processes a .string line. adds newly defined label if there is one, advanced data count, etc */
 	/* returns negative on errors 0 on success */
 	/* .string line */
-
+	int loc;
+	loc = context->dataCount;
 	p += DOT_STRING;
 	if (p == skipWhiteSpaces(p)) {
 		fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName,
@@ -964,12 +1001,11 @@ int processStringLine(struct assemblerContext* context, char*p, char* nextToken,
 		if (labelFlag == 1) {
 			/*add newly defined symbol to symboltable*/
 			add_symbol(&context->table,
-					create_symbol(&context->table, label, context->dataCount,
+					create_symbol(&context->table, label, loc,
 							Regular, Data));
 		}
 		/*successful parse - one word for each operand and one word for .data*/
-		/*update dataCount*/
-		context->dataCount += words;
+		/* we update dataCount when we code the string */
 	}
 	return 0;
 
@@ -980,7 +1016,8 @@ int processDataLine(struct assemblerContext* context, char*p, char* nextToken,
 	/* processes a .data line. adds newly defined label if there is one, advanced data count, etc */
 	/* returns negative on errors 0 on success */
 	/* .data line */
-
+	int loc;
+	loc = context->dataCount;
 	p += DOT_DATA;
 	if (p == skipWhiteSpaces(p)) {
 		fprintf(stderr, "%s:%d: ERROR: no such directive\n", context->fileName,
@@ -996,12 +1033,11 @@ int processDataLine(struct assemblerContext* context, char*p, char* nextToken,
 		if (labelFlag == 1) {
 			/*add newly defined symbol to symboltable*/
 			add_symbol(&context->table,
-					create_symbol(&context->table, label, context->dataCount,
+					create_symbol(&context->table, label, loc,
 							Regular, Data));
 		}
 		/*successful parse - one word for each operand and one word for .data*/
-		/* update data count*/
-		context->dataCount += words;
+		/* we update dataCount when we code the numbers for .data line */
 	}
 	return 0;
 
@@ -1135,15 +1171,15 @@ int processLine(struct assemblerContext *context, char *line) {
 	nextToken = readToken(p, " \t:");
 	if (*nextToken == ':') {
 		/* new label defined in this line*/
-		if(context->pass==FIRST_PASS){
+		if (context->pass == FIRST_PASS) {
 			if (nextToken - p == 0) {
 				fprintf(stderr, "%s:%d: ERROR: expecting non empty label\n",
 						context->fileName, context->lineNumber);
 				return LABEL_EMPTY;
 			}
 			if (nextToken - p > MAX_LABEL) {
-				fprintf(stderr, "%s:%d: ERROR: label too long\n", context->fileName,
-						context->lineNumber);
+				fprintf(stderr, "%s:%d: ERROR: label too long\n",
+						context->fileName, context->lineNumber);
 				return LABEL_TOO_LONG;
 			}
 			strncpyNull(label, p, nextToken - p);
@@ -1153,13 +1189,14 @@ int processLine(struct assemblerContext *context, char *line) {
 				return LABEL_ALREADY_EXISTS;
 			}
 			if (is_reserved_word(label)) {
-				fprintf(stderr, "%s:%d: ERROR: label can't be a reserved word\n",
+				fprintf(stderr,
+						"%s:%d: ERROR: label can't be a reserved word\n",
 						context->fileName, context->lineNumber);
 				return RESERVED_WORD;
 			}
 			if (is_legal(label) != 0) {
-				fprintf(stderr, "%s:%d: ERROR: illegal label\n", context->fileName,
-						context->lineNumber);
+				fprintf(stderr, "%s:%d: ERROR: illegal label\n",
+						context->fileName, context->lineNumber);
 				return ILLEGAL_LABEL;
 			}
 		}
@@ -1186,8 +1223,8 @@ int processLine(struct assemblerContext *context, char *line) {
 
 struct assemblerContext *createAssemblerContext(char *fileName) {
 	struct assemblerContext *context = (struct assemblerContext *) calloc(1,
-	/* calloc already initialized to zeroes. we take care of the rest */
 			sizeof(struct assemblerContext));
+	/* calloc already initialized to zeroes. we take care of the rest */
 	context->fileName = duplicateString(fileName);
 	return context;
 }
@@ -1205,9 +1242,10 @@ int assembler(char *fileName) {
 	int result;
 	struct assemblerContext *context = createAssemblerContext(fileName);
 	result = firstPass(context);
+	/*print_symboltable(&context->table);*/
 	if (result == 0) {
-        /* call second pass if no errors */
-        result = secondPass(context);
+		/* call second pass if no errors */
+		result = secondPass(context);
 	}
 	deallocateAssemblerContext(context);
 	return result;

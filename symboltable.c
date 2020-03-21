@@ -44,7 +44,7 @@ void modify_symbol(struct symboltable* table, char* str, int address, int type,
 		int location) {
 	struct symbol* temp = table->head;
 	while (temp != NULL) {
-		if (strcmp(str, temp->label)) {
+		if (strcmp(str, temp->label)==0) {
 			if (address != UNKNOWN_ADDRESS)
 				temp->address = address;
 			if (location != Unknown_Location)

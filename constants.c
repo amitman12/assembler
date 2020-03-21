@@ -30,7 +30,7 @@ int is_reserved_word(char* str){
 
 
 int find_in_insts(char* item){
-	/* find if a string is an istruction .data or .string or others. return -1 means not found */
+	/* find if a string is an instruction .data or .string or others. return -1 means not found */
 	int i;
 	for(i=0;i<INSTS_COUNT;i++){
 		if(strcmp(item,insts[i])==0)

@@ -51,6 +51,7 @@ int secondPass(struct assemblerContext *context) {
 	fprintf(output, "%d %d\n",context->instructionCount,context->dataCount);
 	context->instructionCount = 0;
     while (fgets(line, MAX_CMD, inputFile)) {
+
         chomp(line);
         ++context->lineNumber;
         if ((result = processLine(context, line)) < 0) {
