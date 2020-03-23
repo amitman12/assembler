@@ -63,28 +63,9 @@ union ImmediateWord {
 	} info;
 };
 
-int ensureOutExternFile(struct assemblerContext *context) {
-	/* copies given .extern label to output file */
-	/* returns -1 on fail 0 on success*/
-
-	if (context->extFile != NULL) {
-	    return 0;
-	}
-    context->extFile = fopenFileWithExt(context->fileName, "w", "ext");
-	if (context->extFile == NULL) {
-		fprintf(stderr, "ERROR: could not create/open output file.\n");
-		return -1;
-	}
-	return 0;
-}
-
 int writeOutExtern(struct assemblerContext *context, char* label, int infoWord) {
-    int result = ensureOutExternFile(context);
-    if (result != 0) {
-        return result;
-    }
-	fprintf(context->extFile, "%s %d\n", label, context->instructionCount + MEM_START + infoWord);
-	return 0;
+    appendExtLine(&context->extOut, label, context->instructionCount + MEM_START + infoWord);
+    return 0;
 }
 
 void outMemory(struct assemblerContext *context) {
@@ -93,8 +74,7 @@ void outMemory(struct assemblerContext *context) {
 	/* context->objFile is already open */
 	int dataWord = 0;
 	while (dataWord < context->dataCount) {
-		fprintf(context->objFile, "%d %05o\n",
-				context->instructionCount + dataWord + MEM_START,
+        appendObjLine(&context->objOut, context->instructionCount + dataWord + MEM_START,
 				twosComplement(context->memory[dataWord]));
 		dataWord++;
 	}
@@ -315,24 +295,24 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 		}
 	}
 	if (numWords == 1) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
-				twosComplement(words[0]));
+	    appendObjLine(&context->objOut, context->instructionCount + MEM_START,
+                      twosComplement(words[0]));
 		return 0;
 	} else if (numWords == 2) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
+        appendObjLine(&context->objOut, context->instructionCount + MEM_START,
 				twosComplement(words[0]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 1,
+        appendObjLine(&context->objOut, context->instructionCount + MEM_START + 1,
 				twosComplement(words[1]));
 		return 0;
 	}
 
 	else {
 		/* numWords==3 */
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
+        appendObjLine(&context->objOut, context->instructionCount + MEM_START,
 				twosComplement(words[0]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 1,
+        appendObjLine(&context->objOut, context->instructionCount + MEM_START + 1,
 				twosComplement(words[1]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 2,
+        appendObjLine(&context->objOut, context->instructionCount + MEM_START + 2,
 				twosComplement(words[2]));
 		return 0;
 	}
@@ -1250,12 +1230,8 @@ struct assemblerContext *createAssemblerContext(char *fileName) {
 }
 
 void deallocateAssemblerContext(struct assemblerContext *p) {
-	if (p->objFile) {
-		fclose(p->objFile);
-	}
-	if (p->extFile) {
-		fclose(p->extFile);
-	}
+	free(p->extOut);
+	free(p->objOut);
 	free(p->fileName);
 	free(p->memory);
 	dealloc_symbol_table(&p->table);
