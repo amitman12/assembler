@@ -83,7 +83,7 @@ int writeOutExtern(struct assemblerContext *context, char* label, int infoWord) 
     if (result != 0) {
         return result;
     }
-	fprintf(context->extFile, "%s %d\n", label, context->instructionCount + 100 + infoWord);
+	fprintf(context->extFile, "%s %d\n", label, context->instructionCount + MEM_START + infoWord);
 	return 0;
 }
 
@@ -94,7 +94,7 @@ void outMemory(struct assemblerContext *context) {
 	int dataWord = 0;
 	while (dataWord < context->dataCount) {
 		fprintf(context->objFile, "%d %05o\n",
-				context->instructionCount + dataWord + 100,
+				context->instructionCount + dataWord + MEM_START,
 				twosComplement(context->memory[dataWord]));
 		dataWord++;
 	}
@@ -315,24 +315,24 @@ int codeCommand(struct assemblerContext *context, struct commandInfo *cmdInfo,
 		}
 	}
 	if (numWords == 1) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
 				twosComplement(words[0]));
 		return 0;
 	} else if (numWords == 2) {
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
 				twosComplement(words[0]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 101,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 1,
 				twosComplement(words[1]));
 		return 0;
 	}
 
 	else {
 		/* numWords==3 */
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 100,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START,
 				twosComplement(words[0]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 101,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 1,
 				twosComplement(words[1]));
-		fprintf(context->objFile, "%d %05o\n", context->instructionCount + 102,
+		fprintf(context->objFile, "%d %05o\n", context->instructionCount + MEM_START + 2,
 				twosComplement(words[2]));
 		return 0;
 	}
@@ -652,6 +652,9 @@ char *readCommandOperand(struct assemblerContext *context, char *p,
 
 int processGroup1Command(struct assemblerContext *context,
 		struct commandInfo *cmdInfo, char *args) {
+	/* only gets commands of group 1 - see comment above */
+	/* if first pass - checks syntax of command line neg on err */
+	/* if second pass - codes command line into outputfile using other functions*/
 	/*commands of group 1 - mov,add,sub */
 	/* args points to first char of first argument in line */
 	char *p;
@@ -1145,7 +1148,7 @@ int processCommandLine(struct assemblerContext *context, char *p,
 	if (labelFlag == 1 && context->pass == FIRST_PASS)
 		add_symbol(&context->table,
 				create_symbol(&context->table, label,
-						context->instructionCount + 100, Regular, Code));
+						context->instructionCount + MEM_START, Regular, Code));
 
 	if (nextToken - p == 0 || nextToken - p >= MAX_CMD) {
 		fprintf(stderr, "%s:%d: ERROR: command expected\n", context->fileName,
@@ -1172,9 +1175,8 @@ int processCommandLine(struct assemblerContext *context, char *p,
 }
 
 int processLine(struct assemblerContext *context, char *line) {
-	/* returns number of machine code words needed for this line on successful parse */
+	/* returns 0 on successful parse, negatives on errors */
 	/* returns negatives on errors */
-	/* pass = 1 on firstpass. pass = 2 on secondpass */
 	char *p = line;
 	char *nextToken;
 	char label[MAX_LABEL_LEN+1];

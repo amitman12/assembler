@@ -14,57 +14,57 @@ prepare_tests: assembler
 test0: prepare_tests
 	./assembler test0 > results/test0.log 2>&1 || true
 	@ls test0.* | sort | grep -v test0.as | xargs cat >> results/test0.log
-	@diff -q -N results/test0.log expected/test0.log || diff -s -N --side-by-side results/test0.log expected/test0.log && echo test0 O.K || true
+	@diff --strip-trailing-cr -q -N results/test0.log expected/test0.log || diff -s -N --side-by-side results/test0.log expected/test0.log && echo test0 O.K || true
 
 test1: prepare_tests
 	./assembler test1 > results/test1.log 2>&1 || true
 	@ls test1.* | sort | grep -v test1.as | xargs cat >> results/test1.log
-	@diff -q -N results/test1.log expected/test1.log || diff -s -N --side-by-side results/test1.log expected/test1.log && echo test1 O.K || true
+	@diff --strip-trailing-cr -q -N results/test1.log expected/test1.log || diff -s -N --side-by-side results/test1.log expected/test1.log && echo test1 O.K || true
 
 test2: prepare_tests
 	./assembler test2 > results/test2.log 2>&1 || true
 	@ls test2.* | sort | grep -v test2.as | xargs cat >> results/test2.log
-	@diff -q -N results/test2.log expected/test2.log || diff -s -N --side-by-side results/test2.log expected/test2.log && echo test2 O.K || true
+	@diff --strip-trailing-cr -q -N results/test2.log expected/test2.log || diff -s -N --side-by-side results/test2.log expected/test2.log && echo test2 O.K || true
 
 test3: prepare_tests
 	./assembler test3 > results/test3.log 2>&1 || true
 	@ls test3.* | sort | grep -v test3.as | xargs cat >> results/test3.log
-	@diff -q -N results/test3.log expected/test3.log || diff -s -N --side-by-side results/test3.log expected/test3.log && echo test3 O.K || true
+	@diff --strip-trailing-cr -q -N results/test3.log expected/test3.log || diff -s -N --side-by-side results/test3.log expected/test3.log && echo test3 O.K || true
 
 test4: prepare_tests
 	./assembler test4 > results/test4.log 2>&1 || true
 	@ls test4.* | sort | grep -v test4.as | xargs cat >> results/test4.log
-	@diff -q -N results/test4.log expected/test4.log || diff -s -N --side-by-side results/test4.log expected/test4.log && echo test4 O.K || true
+	@diff --strip-trailing-cr -q -N results/test4.log expected/test4.log || diff -s -N --side-by-side results/test4.log expected/test4.log && echo test4 O.K || true
 
 test5: prepare_tests
 	./assembler test5 > results/test5.log 2>&1 || true
 	@ls test5.* | sort | grep -v test5.as | xargs cat >> results/test5.log
-	@diff -q -N results/test5.log expected/test5.log || diff -s -N --side-by-side results/test5.log expected/test5.log && echo test5 O.K || true
+	@diff --strip-trailing-cr -q -N results/test5.log expected/test5.log || diff -s -N --side-by-side results/test5.log expected/test5.log && echo test5 O.K || true
 
 test6: prepare_tests
 	./assembler test6 > results/test6.log 2>&1 || true
 	@ls test6.* | sort | grep -v test6.as | xargs cat >> results/test6.log
-	@diff -q -N results/test6.log expected/test6.log || diff -s -N --side-by-side results/test6.log expected/test6.log && echo test6 O.K || true
+	@diff --strip-trailing-cr -q -N results/test6.log expected/test6.log || diff -s -N --side-by-side results/test6.log expected/test6.log && echo test6 O.K || true
 
 test7: prepare_tests
 	./assembler test7 > results/test7.log 2>&1 || true
 	@ls test7.* | sort | grep -v test7.as | xargs cat >> results/test7.log
-	@diff -q -N results/test7.log expected/test7.log || diff -s -N --side-by-side results/test7.log expected/test7.log && echo test7 O.K || true
+	@diff --strip-trailing-cr -q -N results/test7.log expected/test7.log || diff -s -N --side-by-side results/test7.log expected/test7.log && echo test7 O.K || true
 
 test8: prepare_tests
 	./assembler test8 > results/test8.log 2>&1 || true
 	@ls test8.* | sort | grep -v test8.as | xargs cat >> results/test8.log
-	@diff -q -N results/test8.log expected/test8.log || diff -s -N --side-by-side results/test8.log expected/test8.log && echo test8 O.K || true
+	@diff --strip-trailing-cr -q -N results/test8.log expected/test8.log || diff -s -N --side-by-side results/test8.log expected/test8.log && echo test8 O.K || true
 
 test9: prepare_tests
 	./assembler test9 > results/test9.log 2>&1 || true
 	@ls test9.* | sort | grep -v test9.as | xargs cat >> results/test9.log
-	@diff -q -N results/test9.log expected/test9.log || diff -s -N --side-by-side results/test9.log expected/test9.log && echo test9 O.K || true
+	@diff --strip-trailing-cr -q -N results/test9.log expected/test9.log || diff -s -N --side-by-side results/test9.log expected/test9.log && echo test9 O.K || true
 
 test10: prepare_tests
 	./assembler test10 > results/test10.log 2>&1 || true
 	@ls test10.* | sort | grep -v test10.as | xargs cat >> results/test10.log
-	@diff -q -N results/test10.log expected/test10.log || diff -s -N --side-by-side results/test10.log expected/test10.log && echo test10 O.K || true
+	@diff --strip-trailing-cr -q -N results/test10.log expected/test10.log || diff -s -N --side-by-side results/test10.log expected/test10.log && echo test10 O.K || true
 
 
 

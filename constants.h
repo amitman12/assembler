@@ -37,15 +37,9 @@
 #define FIRST_PASS 1
 #define SECOND_PASS 2
 #define BYTES_IN_WORD 2
-#define BITS_IN_WORD 15
-
-
-
 #define MAX_LABEL_LEN 31
-#define MAX_CMD 1000
-
-
-
+#define MAX_CMD 300
+#define MEM_START 100
 extern char* opcodes[];
 enum opcodes {mov=0,cmp=1,add=2,sub=3,lea=4,clr=5,not=6,inc=7,dec=8,jmp=9,bne=10,red=11,prn=12,jsr=13,rts=14,stop=15};
 
