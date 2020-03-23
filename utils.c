@@ -5,6 +5,8 @@
  *      Author: user
  */
 #include <ctype.h>
+#include <string.h>
+#include <errno.h>
 #include "utils.h"
 #include "constants.h"
 
@@ -241,4 +243,32 @@ char* duplicateString(char* src) {
 	}
 	strcpy(dup, src);
 	return dup;
+}
+
+void appendObjLine(char** out, int location, unsigned int code) {
+    char tmp[MAX_OUT_LINE_LEN];
+    unsigned int curSize;
+    sprintf(tmp, "%d %05o\n", location, code);
+
+    curSize = (*out == NULL) ? 0 : strlen(*out);
+    *out = (char*)realloc(*out, strlen(tmp) + curSize + 1);
+    if (*out == NULL) {
+        fprintf(stderr, "out of memory");
+        exit(1);
+    }
+    strcpy(*out+curSize, tmp);
+}
+
+void appendExtLine(char** out, char* label, int location) {
+    char tmp[MAX_OUT_LINE_LEN];
+    unsigned int curSize;
+    sprintf(tmp, "%s %d\n", label, location);
+
+    curSize = (*out == NULL) ? 0 : strlen(*out);
+    *out = (char*)realloc(*out, strlen(tmp) + curSize + 1);
+    if (*out == NULL) {
+        fprintf(stderr, "out of memory");
+        exit(1);
+    }
+    strcpy(*out+curSize, tmp);
 }

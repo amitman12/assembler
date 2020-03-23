@@ -26,4 +26,10 @@ char* readRegister(char*, int*);
 int isDelimiter(char, char*);
 char* strncpyNull(char* dst, char* src, int count);
 char* duplicateString(char* src);
+
+void appendObjLine(char** out, int location, unsigned int code);
+void appendExtLine(char** out, char* label, int location);
+
+int writeToFileWithExt(char* fileName, char* mode, char* ext, char* contents);
+
 #endif /* UTILS_H_ */

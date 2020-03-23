@@ -19,8 +19,8 @@ struct assemblerContext {
     int instructionCount;
     int dataCount;
     int* memory;
-    FILE* objFile;
-    FILE* extFile;
+    char* objOut;
+    char* extOut;
 };
 
 struct commandInfo {
