@@ -1077,7 +1077,7 @@ int processExternalLine(struct assemblerContext* context, char*p,
 	nextToken = skipWhiteSpaces(nextToken);
 	words = processDotExtern(context, nextToken);
 	if (words < 0) {
-		/* processDotData failed and printed errors*/
+		/* processDotExtern failed and printed errors*/
 		return words;
 	}
 	/*successful parse - one word for each operand and one word for .data*/

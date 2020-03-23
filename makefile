@@ -66,14 +66,17 @@ test10: prepare_tests
 	@ls test10.* | sort | grep -v test10.as | xargs cat >> results/test10.log
 	@diff --strip-trailing-cr -q -N results/test10.log expected/test10.log || diff -s -N --side-by-side results/test10.log expected/test10.log && echo test10 O.K || true
 
+test_multi: prepare_tests
+	./assembler test_multi1 test_multi2 test_multi3 > results/test_multi.log 2>&1 || true
+	@ls test_multi* | sort | grep -v 'test.*as' | while read filename; do (echo ""; echo "file:$$filename"; echo "=============="; cat "$$filename") >> results/test_multi.log; done
+	@diff --strip-trailing-cr -q -N results/test_multi.log expected/test_multi.log || diff -s -N --side-by-side results/test_multi.log expected/test_multi.log && echo test_multi O.K || true
 
 
-
-
-
-test: test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
+test: test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test_multi
 
 approve: prepare_tests
 	cp results/* expected/
 
 zip: test
+	zip assembler.zip -r assembler readme.md *.c *.h makefile test*.as expected
+
