@@ -1162,6 +1162,11 @@ int processLine(struct assemblerContext *context, char *line) {
 	char label[MAX_LABEL_LEN+1];
 	int result;
 	int labelFlag = 0;
+	if(strlen(line)>=MAX_OUT_LINE_LEN){
+		fprintf(stderr, "%s:%d: ERROR: line is too long\n",
+				context->fileName, context->lineNumber);
+			return LINE_TOO_LONG;
+	}
 	p = skipWhiteSpaces(p);
 	if (*p == ';' || *p == '\0') {
 		/* comment line*/

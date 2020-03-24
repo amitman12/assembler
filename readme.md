@@ -1,157 +1,50 @@
-# comments
+some important points:
 
+1. there are four types of sentences as defined in page 23.
+	according to the explanation, an empty cannot have a label definition.
+	therefore, a sentence like   SOMELABEL:   
+	is illegal as it is not an empty sentence, nor is it a command/derictive 	 sentence.
 
+2. in page 25, a "legal label" is defined:
+	a legal label starts with an alphabetic letter followed by either letters
+	or numbers so that the length is 31 at most, not including \0.
+	then, immediately after the last character of the label, there is a ':'.
+	whitespaces are not numbers or letters.
+	therefore, there cannot be any whitespaces in between the label and the :
+	as in, LabelExample   : add r5,r6 is illegal.
+	eventhough later in the explanation it is demanded to allow any amount
+	of whitespaces - it was not clear which rule to follow here...
 
+3. the errors throwed by this program don't mention the commas.
+	if too many/too little commas are given, the program will fail to
+	recognize the operand/s and the error will be simillar to:
+	too many/little/illegal operands for command/directive line ... etc
+	------
 
+4. GENERAL ALGORITHM:
+	the questions in the website showed that the algorithm in page 33 is
+	only a suggested one, as in, it can be changed and tweaked.
+	therefore unlike the algorithm, firstPass does NOT have anything to do
+	with coding command lines. it does not code ANY command lines, even
+	if they do not depend on labels.. etc.
+	firstPass DOES, however, code directive lines and stores that in 		allocated space. the rest is like the given algorithm - firstPass updates
+	a data structure for labels in code.
+	after secondPass is over, the data copied into the allocated space in 		firstPass will then be copied into output files, AFTER the command lines 	 have been coded. (and assuming there are no errors);
+	the translation of given lines into binary and then octal happends 		during secondPass. the output is stored in an internal array, and once 		we run out of code, if there are no errors, output files are created,
+	the translated command lines are copies, and then the .data/.string
+	lines are added below the code segment.
 
+5. there are some command combinations that seem strange, for example:
+	it was not clear if this is legal or not:
+	jmp K
+	END: stop
+	K: .data 31
+	jumping to a directive line. no stop, etc..
+	my program ALLOWS such cases as it was not specified whether it should 		do so or not.
 
-* rename file: symboletable to symbol_table
-* rename struct: symboletable to symbol_table
-* remove struct definition and variable from h file and move to .c
-* usage documentation should be in the .h file near the declaration.
-* implementation documentation should be near the implementation.
-* rename edit_symbol to modify / update
-* rename dealloc_table to dealloc_symbol_table
-* use strcmp instead of eqls
-* in symbol struct, better use enum for location
-* in symbol struct, better use enum for type
-* comments are always before
-* in .c file include .h and avoid duplicating declarations
-* global variables that should not be accessed by other modules should be static
-* consider adding validations
-* amit: edit_symbol(int address, location, type). update only uninitialized values
-* all local functions should be declared as static (free_list)
-* move eqls to utils or remove and use strcmp
-* document pointers ownership in function usage
-* in struct symbol change label to be array of X chars
-* in constants.h define max label length
-* move opcodes definition to constants.c. leave declaration as "extern" in .h
-* 
-* 
-
-
-
-void parse_cmd1 () {
-
-}
-
-void parse_cmd2 () {
-    
-}
-
-
-void first_pass() {
-    char line[MAX_LEN];
-    char label[MAX_LABEL_LEN];
-    struct symbol* s;
-    struct FILE* f;
-    int eof = 0;
-    f = fopen("a.as");
-    if (f == NULL) {
-        print not found;
-        return;
-    }
-
-    while (!eof) {
-        if (fgets(line, f) == NULL) {
-            eof = 1;
-        } else {
-            (opcode, ....,) = parse_line(line, label)
-            ok = 0;
-            for (i = 0; opcodes[i] != NULL; ++i) {
-
-                if (strcmp(opcodes[i], opcode) == 0) {
-                    ok = 1;
-                }
-            }
-            if (!OK) {
-                print error;
-                return;
-            }
-
-            opcodes[i].parse(line);
-            if (i == 1 || i == 2 || i == 3) {
-
-            }
-
-
-            if (strcmp(opcode[i], "mov") == 0 || strcmp(opcodes[]))
-
-            s = find_symbol(label)
-            if (s == NULL) {
-                create_symbol(label, ....);
-            } else {
-                maybe update
-
-            }
-        }
-    }
-}
-
-
-
-
-
------------------------------------------------------------------------------------
-
-next task
--------------
-
-* create module main.c
-* create module assembler.c, assembler.h
-* create module first_pass.c, first_pass.h
-* parse command line arguments
-* call first pass for each command line argument
-
-
-
-main.c
--------------
-
-// argc - number of arguments (including the app name)
-//        that means you start from 1
-// argv - is the array of arguments
-// argv[0] - app name
-// argv[1] - arg1
-int main(int argc, char*argv[]) {
-    int i;
-    if (argc < 2) {
-        printf("expecting file names\n");
-        printf("USAGE: assembler file...\n");
-        exit(1);
-    }
-    for (i = 1; i < argc; ++i) {
-        assembler(argv[i]);
-    }
-}
-
-
-assembler.c
---------------------
-int assembler(char* fileName) {
-    firstPass(fileName);
-}
-
-
-
-first_pass.c
-----------------------
-
-int firstPass(char* fileName) {
-    FILE* inputFile;
-
-    inputFile = fopen(fileName, "r");
-    if (inputFile == NULL) {
-        fprintf(stderr, "could not open file %s. error:%s\n", fileName, strerror(errno));
-        return 1;
-    }
-    //CAUTION. must not return until end of function. must call fclose
-
-    while (fgets(line, ..., inputFile)) {
-
-    }
-
-    fclose(inputFile);
-}
-
-// read on fopen, fgets, fclose
+6. I have created a few test files that contain legal and illegal scenarios.
+	for each one of these files, I also created the expected results
+	each output (for testfile) is compared to the expected output and 
+	OK is printed if the test succeeded.
+	test0 is exactly the code in page 37.
+	
