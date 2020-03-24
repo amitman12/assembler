@@ -78,5 +78,5 @@ approve: prepare_tests
 	cp results/* expected/
 
 zip: test
-	zip assembler.zip -r assembler readme.md *.c *.h makefile test*.as expected
+	zip assembler.zip -r assembler readme.md *.c *.h makefile test* expected
 
